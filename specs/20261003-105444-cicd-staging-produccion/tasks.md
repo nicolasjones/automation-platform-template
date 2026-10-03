@@ -17,7 +17,7 @@
 
 **Purpose**: Dejar la documentación base lista antes de que cada historia agregue su propia sección — evita que la primera historia en implementarse tenga que crear el archivo desde cero.
 
-- [ ] T001 Crear `docs/adoptar-cicd-staging-produccion.md` con la estructura de secciones (una por mecanismo: migraciones, deploy de infraestructura del VPS, publicación de flows, import de dashboards) y el listado de los 6 GitHub Environments a crear manualmente (`migraciones-cloud-staging`/`-production`, `deploy-infraestructura-vps-staging`/`-production`, `publicar-flows-kestra-staging`/`-production`), señalando que el required reviewers de cada `*-production` se configura a mano en GitHub (no es expresable en YAML)
+- [X] T001 Crear `docs/adoptar-cicd-staging-produccion.md` con la estructura de secciones (una por mecanismo: migraciones, deploy de infraestructura del VPS, publicación de flows, import de dashboards) y el listado de los 6 GitHub Environments a crear manualmente (`migraciones-cloud-staging`/`-production`, `deploy-infraestructura-vps-staging`/`-production`, `publicar-flows-kestra-staging`/`-production`), señalando que el required reviewers de cada `*-production` se configura a mano en GitHub (no es expresable en YAML)
 
 **Checkpoint**: Documentación base lista — cada historia de usuario puede completar su propia sección sin pisar a las demás.
 
