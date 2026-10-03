@@ -89,14 +89,14 @@
 
 ### Tests for User Story 4
 
-- [ ] T018 [P] [US4] Escribir `infra/superset/importar-dashboards.test.mjs` que verifique: rechaza `--source` inexistente antes de autenticar contra Superset, y falla con un mensaje que nombra la variable cuando falta `SUPERSET_URL`/`SUPERSET_USERNAME`/`SUPERSET_PASSWORD` (contrato en `contracts/cli-importar-dashboards-superset.md`)
+- [X] T018 [P] [US4] Escribir `infra/superset/importar-dashboards.test.mjs` que verifique: rechaza `--source` inexistente antes de autenticar contra Superset, y falla con un mensaje que nombra la variable cuando falta `SUPERSET_URL`/`SUPERSET_USERNAME`/`SUPERSET_PASSWORD` (contrato en `contracts/cli-importar-dashboards-superset.md`)
 
 ### Implementation for User Story 4
 
-- [ ] T019 [US4] Implementar `infra/superset/importar-dashboards.mjs`: valida `--source` y `--entorno`, resuelve `SUPERSET_URL`/`SUPERSET_USERNAME`/`SUPERSET_PASSWORD` del entorno, autentica contra la API de Superset, hace `POST` del paquete al endpoint de import, redacta credenciales en cualquier error (depende de T018)
-- [ ] T020 [P] [US4] Agregar las claves `SUPERSET_URL=`, `SUPERSET_USERNAME=`, `SUPERSET_PASSWORD=` (sin valores) a `.env.example`
-- [ ] T021 [US4] Agregar la capacidad `superset-dashboard-import` a `template-capabilities.json` (paths: `infra/superset/importar-dashboards.mjs`, `infra/superset/importar-dashboards.test.mjs`)
-- [ ] T022 [US4] Completar la sección "Import de dashboards de Superset" de `docs/adoptar-cicd-staging-produccion.md`, aclarando explícitamente que no tiene wiring automático a ningún workflow mientras no exista un paquete de dashboard versionado (FR-011)
+- [X] T019 [US4] Implementar `infra/superset/importar-dashboards.mjs`: valida `--source` y `--entorno`, resuelve `SUPERSET_URL`/`SUPERSET_USERNAME`/`SUPERSET_PASSWORD` del entorno, autentica contra la API de Superset, hace `POST` del paquete al endpoint de import, redacta credenciales en cualquier error (depende de T018)
+- [X] T020 [P] [US4] Agregar las claves `SUPERSET_URL=`, `SUPERSET_USERNAME=`, `SUPERSET_PASSWORD=` (sin valores) a `.env.example`
+- [X] T021 [US4] Agregar la capacidad `superset-dashboard-import` a `template-capabilities.json` (paths: `infra/superset/importar-dashboards.mjs`, `infra/superset/importar-dashboards.test.mjs`)
+- [X] T022 [US4] Completar la sección "Import de dashboards de Superset" de `docs/adoptar-cicd-staging-produccion.md`, aclarando explícitamente que no tiene wiring automático a ningún workflow mientras no exista un paquete de dashboard versionado (FR-011)
 
 **Checkpoint**: Las cuatro historias de usuario funcionan de forma independiente — ejecutar Escenario 4 de `quickstart.md`.
 

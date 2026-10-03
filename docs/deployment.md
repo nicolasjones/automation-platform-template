@@ -255,6 +255,19 @@ gate de dos jobs que el resto de esta spec: `production` tiene
 `specs/20261003-105444-cicd-staging-produccion/research.md` §1-2 y
 `contracts/cli-deploy-vps-ci.md`.
 
+### Import de dashboards de Superset (mecanismo genérico, sin wiring automático)
+
+`infra/superset/importar-dashboards.mjs` (spec
+`20261003-105444-cicd-staging-produccion`) importa un paquete exportado de
+Superset (ZIP con el YAML del dashboard y sus datasets/bases) contra la
+instancia de Superset de un entorno, autenticando vía la API REST de
+Superset (login + CSRF token). Es invocación manual (`pnpm
+superset:importar-dashboards -- --source <paquete.zip> --entorno
+staging|production`) — no se dispara por ningún push mientras no exista
+ningún paquete de dashboard versionado en el repositorio, porque hoy ningún
+producto derivado exporta uno real. Ver
+`docs/adoptar-cicd-staging-produccion.md`.
+
 ### Publicación de flows de Kestra (staging → producción)
 
 `.github/workflows/publicar-flows-kestra.yml` (spec

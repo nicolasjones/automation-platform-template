@@ -77,3 +77,7 @@ pena wirearlo a un workflow de push (fuera del alcance de esta spec).
 
 - Secrets por Environment: `SUPERSET_URL`, `SUPERSET_USERNAME`,
   `SUPERSET_PASSWORD`.
+- Invocación: `pnpm superset:importar-dashboards -- --source <paquete.zip> --entorno staging|production`.
+  Exporta `SUPERSET_URL`/`SUPERSET_USERNAME`/`SUPERSET_PASSWORD` antes de
+  correrlo a mano, o inyectalos como secrets si alguna vez se conecta a un
+  workflow.

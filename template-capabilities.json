@@ -9,6 +9,12 @@
       "paths": ["scripts/migrar-supabase-cloud.mjs", "scripts/migrar-supabase-cloud.test.mjs", ".github/workflows/migraciones-cloud.yml"]
     },
     {
+      "id": "superset-dashboard-import",
+      "version": "1.0.0",
+      "title": "Mecanismo genérico de import de dashboards de Superset",
+      "paths": ["infra/superset/importar-dashboards.mjs", "infra/superset/importar-dashboards.test.mjs"]
+    },
+    {
       "id": "vps-deploy-gate",
       "version": "1.0.0",
       "title": "CI de deploy de infraestructura del VPS con gate staging-producción",
