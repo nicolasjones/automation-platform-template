@@ -237,6 +237,20 @@ borraba en cada PR, también en los PR del producto que copió el workflow (ver
   `supabase stop --project-id ci-<repo> --no-backup`.
 - Adopción en productos derivados: `docs/adoptar-ci-base-aislada.md`.
 
+### Migraciones cloud (staging → producción)
+
+`.github/workflows/migraciones-cloud.yml` (spec
+`20261003-105444-cicd-staging-produccion`) aplica `supabase/migrations/**`
+contra el proyecto Supabase cloud de cada entorno con `scripts/migrar-supabase-cloud.mjs`
+(`supabase db push --db-url`). Ya no es un paso manual: push a `main` dispara
+el job `staging` sin gate; el job `production` tiene `needs: staging` y
+corre bajo el GitHub Environment `migraciones-cloud-production`, pausado
+hasta que un required reviewer lo aprueba desde la pestaña Actions.
+`SUPABASE_DB_URL` es un secret por Environment — una cadena de conexión
+acotada al proyecto, no un access token de cuenta. Detalle de diseño y
+alternativas descartadas en
+`specs/20261003-105444-cicd-staging-produccion/research.md`.
+
 ## Promoción simple
 
 ```text

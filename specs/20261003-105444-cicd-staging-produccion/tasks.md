@@ -31,16 +31,16 @@
 
 ### Tests for User Story 1
 
-- [ ] T002 [P] [US1] Escribir `scripts/migrar-supabase-cloud.test.mjs` que verifique: rechaza un `--entorno` que no sea `staging`/`production` antes de tocar la red, y falla con un mensaje que nombra `SUPABASE_DB_URL` cuando falta (contrato en `contracts/cli-migrar-supabase-cloud.md`)
+- [X] T002 [P] [US1] Escribir `scripts/migrar-supabase-cloud.test.mjs` que verifique: rechaza un `--entorno` que no sea `staging`/`production` antes de tocar la red, y falla con un mensaje que nombra `SUPABASE_DB_URL` cuando falta (contrato en `contracts/cli-migrar-supabase-cloud.md`)
 
 ### Implementation for User Story 1
 
-- [ ] T003 [US1] Implementar `scripts/migrar-supabase-cloud.mjs`: valida `--entorno`, usa `requireEnvironment('SUPABASE_DB_URL')` de `scripts/operaciones.mjs`, ejecuta `supabase db push --db-url "$SUPABASE_DB_URL"` vía `run()`, y agrega `SUPABASE_DB_URL` a la lista de valores redactados en `redactError` (depende de T002)
-- [ ] T004 [P] [US1] Agregar el script `db:migrar:cloud` en `package.json` apuntando a `node scripts/migrar-supabase-cloud.mjs`
-- [ ] T005 [US1] Crear `.github/workflows/migraciones-cloud.yml` con los jobs `staging`/`production` según `contracts/workflow-gate.md`, disparado por `push` a `supabase/migrations/**`, cada job invocando `pnpm db:migrar:cloud -- <entorno>` con el secret `SUPABASE_DB_URL` del Environment correspondiente (depende de T003, T004)
-- [ ] T006 [P] [US1] Agregar la entrada `SUPABASE_DB_URL=` (sin valor) a `.env.example`, con un comentario que explique que es por-entorno y vive como secret del GitHub Environment, no en este archivo
-- [ ] T007 [US1] Agregar la capacidad `cloud-migrations-gate` a `template-capabilities.json` (paths: `scripts/migrar-supabase-cloud.mjs`, `scripts/migrar-supabase-cloud.test.mjs`, `.github/workflows/migraciones-cloud.yml`)
-- [ ] T008 [US1] Completar la sección "Migraciones" de `docs/adoptar-cicd-staging-produccion.md` y actualizar `docs/deployment.md` (sección "CI") para reflejar que las migraciones cloud ya no son un paso manual
+- [X] T003 [US1] Implementar `scripts/migrar-supabase-cloud.mjs`: valida `--entorno`, usa `requireEnvironment('SUPABASE_DB_URL')` de `scripts/operaciones.mjs`, ejecuta `supabase db push --db-url "$SUPABASE_DB_URL"` vía `run()`, y agrega `SUPABASE_DB_URL` a la lista de valores redactados en `redactError` (depende de T002)
+- [X] T004 [P] [US1] Agregar el script `db:migrar:cloud` en `package.json` apuntando a `node scripts/migrar-supabase-cloud.mjs`
+- [X] T005 [US1] Crear `.github/workflows/migraciones-cloud.yml` con los jobs `staging`/`production` según `contracts/workflow-gate.md`, disparado por `push` a `supabase/migrations/**`, cada job invocando `pnpm db:migrar:cloud -- <entorno>` con el secret `SUPABASE_DB_URL` del Environment correspondiente (depende de T003, T004)
+- [X] T006 [P] [US1] Agregar la entrada `SUPABASE_DB_URL=` (sin valor) a `.env.example`, con un comentario que explique que es por-entorno y vive como secret del GitHub Environment, no en este archivo
+- [X] T007 [US1] Agregar la capacidad `cloud-migrations-gate` a `template-capabilities.json` (paths: `scripts/migrar-supabase-cloud.mjs`, `scripts/migrar-supabase-cloud.test.mjs`, `.github/workflows/migraciones-cloud.yml`)
+- [X] T008 [US1] Completar la sección "Migraciones" de `docs/adoptar-cicd-staging-produccion.md` y actualizar `docs/deployment.md` (sección "CI") para reflejar que las migraciones cloud ya no son un paso manual
 
 **Checkpoint**: User Story 1 funcional y verificable de forma independiente — ejecutar Escenario 1 de `quickstart.md`.
 

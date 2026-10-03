@@ -3,6 +3,12 @@
   "template_repository": "Agenmatica/automation-platform-template",
   "capabilities": [
     {
+      "id": "cloud-migrations-gate",
+      "version": "1.0.0",
+      "title": "CI de migraciones de Supabase cloud con gate staging-producción",
+      "paths": ["scripts/migrar-supabase-cloud.mjs", "scripts/migrar-supabase-cloud.test.mjs", ".github/workflows/migraciones-cloud.yml"]
+    },
+    {
       "id": "worker-execution-cycle",
       "version": "1.3.0",
       "title": "Ciclo auditable de ejecuciones de workers",

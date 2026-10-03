@@ -28,6 +28,8 @@
     "test:db:ci": "node scripts/supabase-ci.mjs verificar && PGPASSWORD=postgres PGSSLMODE=disable pg_prove --host host.docker.internal --port $SUPABASE_DB_PORT --username postgres --dbname postgres supabase/tests/database/*.sql",
     "db:reset:ci": "node scripts/reset-db-ci.mjs",
     "db:ci:preparar": "node scripts/supabase-ci.mjs preparar",
+    "db:migrar:cloud": "node scripts/migrar-supabase-cloud.mjs",
+    "test:db:migrar-cloud": "node --test scripts/migrar-supabase-cloud.test.mjs",
     "deploy:vps": "node scripts/deploy-vps.mjs",
     "kestra:render-flow": "node infra/kestra/renderizar-flow.mjs",
     "kestra:sincronizar-rol-local": "node infra/kestra/sincronizar-rol-orquestacion.mjs",

@@ -25,6 +25,13 @@ test('redactError elimina secretos presentes y no altera mensajes sin secreto', 
   if (previous === undefined) delete process.env.KESTRA_BASIC_AUTH_PASSWORD; else process.env.KESTRA_BASIC_AUTH_PASSWORD = previous;
 });
 
+test('redactError también elimina SUPABASE_DB_URL', () => {
+  const previous = process.env.SUPABASE_DB_URL;
+  process.env.SUPABASE_DB_URL = 'postgres://usuario:secreto-de-prueba@host/db';
+  assert.equal(redactError(new Error('falló postgres://usuario:secreto-de-prueba@host/db')), 'falló [REDACTADO]');
+  if (previous === undefined) delete process.env.SUPABASE_DB_URL; else process.env.SUPABASE_DB_URL = previous;
+});
+
 test('run conserva el código de salida y redacta stderr', async () => {
   const previous = process.env.KESTRA_BASIC_AUTH_PASSWORD;
   process.env.KESTRA_BASIC_AUTH_PASSWORD = 'secreto-de-prueba';

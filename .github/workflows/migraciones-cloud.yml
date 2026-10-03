@@ -1,0 +1,66 @@
+name: Migraciones cloud
+
+# CI de migraciones de Supabase contra proyectos cloud por entorno (spec
+# 20261003-105444-cicd-staging-produccion). Gate nativo de GitHub: el job de
+# producción tiene `needs: staging` y corre bajo el Environment
+# `migraciones-cloud-production`, que se pausa hasta un click de aprobación
+# de un required reviewer configurado a mano en GitHub (no expresable en
+# YAML — ver docs/adoptar-cicd-staging-produccion.md). `staging` no tiene
+# reviewers y corre directo en cada push relevante.
+#
+# Credenciales: SUPABASE_DB_URL es un secret por GitHub Environment (cadena
+# de conexión Postgres del proyecto cloud de ese entorno), nunca un access
+# token de cuenta — ver specs/20261003-105444-cicd-staging-produccion/research.md §3.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "scripts/migrar-supabase-cloud.mjs"
+      - ".github/workflows/migraciones-cloud.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  staging:
+    runs-on: [self-hosted, platform-local]
+    environment: migraciones-cloud-staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - name: Instalar Supabase CLI
+        run: |
+          curl -fsSL https://github.com/supabase/cli/releases/download/v2.116.0/supabase_2.116.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin supabase
+          supabase --version
+      - run: pnpm db:migrar:cloud -- --entorno staging
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+  production:
+    needs: staging
+    runs-on: [self-hosted, platform-local]
+    environment: migraciones-cloud-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - name: Instalar Supabase CLI
+        run: |
+          curl -fsSL https://github.com/supabase/cli/releases/download/v2.116.0/supabase_2.116.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin supabase
+          supabase --version
+      - run: pnpm db:migrar:cloud -- --entorno production
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
