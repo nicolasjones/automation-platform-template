@@ -37,13 +37,14 @@ jobs:
         env:
           KESTRA_BASIC_AUTH_USERNAME: ${{ secrets.KESTRA_BASIC_AUTH_USERNAME }}
           KESTRA_BASIC_AUTH_PASSWORD: ${{ secrets.KESTRA_BASIC_AUTH_PASSWORD }}
+          KESTRA_URL: ${{ secrets.KESTRA_PUBLIC_URL }}
         run: |
           set -euo pipefail
           for file in infra/kestra/flows/*.yml; do
             id=$(grep -m1 '^id:' "$file" | sed 's/^id: *//')
             namespace=$(grep -m1 '^namespace:' "$file" | sed 's/^namespace: *//')
             echo "Publicando $namespace/$id ($file)"
-            node infra/kestra/desplegar-flow.mjs --source "$file" --namespace "$namespace" --flow-id "$id" --kestra-url "${{ secrets.KESTRA_PUBLIC_URL }}"
+            node infra/kestra/desplegar-flow.mjs --source "$file" --namespace "$namespace" --flow-id "$id" --kestra-url "$KESTRA_URL"
           done
 
   production:
@@ -63,11 +64,12 @@ jobs:
         env:
           KESTRA_BASIC_AUTH_USERNAME: ${{ secrets.KESTRA_BASIC_AUTH_USERNAME }}
           KESTRA_BASIC_AUTH_PASSWORD: ${{ secrets.KESTRA_BASIC_AUTH_PASSWORD }}
+          KESTRA_URL: ${{ secrets.KESTRA_PUBLIC_URL }}
         run: |
           set -euo pipefail
           for file in infra/kestra/flows/*.yml; do
             id=$(grep -m1 '^id:' "$file" | sed 's/^id: *//')
             namespace=$(grep -m1 '^namespace:' "$file" | sed 's/^namespace: *//')
             echo "Publicando $namespace/$id ($file)"
-            node infra/kestra/desplegar-flow.mjs --source "$file" --namespace "$namespace" --flow-id "$id" --kestra-url "${{ secrets.KESTRA_PUBLIC_URL }}"
+            node infra/kestra/desplegar-flow.mjs --source "$file" --namespace "$namespace" --flow-id "$id" --kestra-url "$KESTRA_URL"
           done

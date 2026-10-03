@@ -106,9 +106,9 @@
 
 **Purpose**: Verificación transversal una vez que las historias que se vayan a entregar en esta ronda estén completas.
 
-- [ ] T023 Correr `pnpm docs:check` y resolver cualquier gap entre código y documentación antes de cerrar el PR
-- [ ] T024 [P] Revisar los tres workflows nuevos en busca de cualquier `echo`/log que pueda exponer un secret en texto plano (migraciones, deploy VPS, publicación de flows)
-- [ ] T025 Ejecutar los cuatro escenarios de `quickstart.md` contra un entorno de prueba real (o el más cercano disponible) y registrar el resultado en la spec (nota de desvío con referencia a commit si algo no salió como estaba planeado, por CLAUDE.md)
+- [X] T023 Correr `pnpm docs:check` y resolver cualquier gap entre código y documentación antes de cerrar el PR
+- [X] T024 [P] Revisar los tres workflows nuevos en busca de cualquier `echo`/log que pueda exponer un secret en texto plano (migraciones, deploy VPS, publicación de flows) — encontró un hallazgo real: `secrets.*` interpolado directo en texto `run:` en los tres workflows nuevos (riesgo de inyección, no solo de log) y se corrigió pasándolos todos por `env:` (ver commit de esta fase)
+- [ ] T025 Ejecutar los cuatro escenarios de `quickstart.md` contra un entorno de prueba real — **bloqueado**: requiere que el coordinador provisione los 6 GitHub Environments con sus secrets reales, un VPS de prueba accesible por SSH, y un proyecto Supabase cloud de prueba. Ninguno de esos recursos existe hoy ni es algo que corresponda crear de forma autónoma (altera configuración compartida del repositorio y requiere credenciales reales). Validado en su lugar: las 3 definiciones de workflow son YAML válido, los 3 scripts nuevos tienen sus tests unitarios en verde (14/14), `pnpm docs:check` y la verificación de versiones de capacidades pasan.
 
 ---
 
