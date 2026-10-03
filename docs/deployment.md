@@ -289,8 +289,13 @@ el job `staging` sin gate; el job `production` tiene `needs: staging` y
 corre bajo el GitHub Environment `migraciones-cloud-production`, pausado
 hasta que un required reviewer lo aprueba desde la pestaña Actions.
 `SUPABASE_DB_URL` es un secret por Environment — una cadena de conexión
-acotada al proyecto, no un access token de cuenta. Detalle de diseño y
-alternativas descartadas en
+acotada al proyecto, no un access token de cuenta. Antes de aplicar nada,
+`scripts/validar-migraciones-aditivas.mjs` rechaza cualquier migración
+destructiva (`DROP TABLE`/`COLUMN`, `TRUNCATE`) que no documente su
+Reversión — misma convención ya vigente en `supabase/migrations/` (un
+comentario de encabezado con la palabra "Reversión" y los pasos para
+deshacerla), ignora los `DROP` que ya viven comentados como esa
+instrucción. Detalle de diseño y alternativas descartadas en
 `specs/20261003-105444-cicd-staging-produccion/research.md`.
 
 ## Promoción simple

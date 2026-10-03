@@ -41,6 +41,9 @@ y `.github/workflows/migraciones-cloud.yml`.
 - Secret por Environment: `SUPABASE_DB_URL` (cadena de conexión Postgres del
   proyecto cloud de ese entorno).
 - Dispara en `push` a `supabase/migrations/**`.
+- Antes de aplicar nada, `pnpm db:validar:aditivas` rechaza cualquier
+  migración destructiva sin Reversión documentada (misma convención ya
+  vigente en `supabase/migrations/`).
 
 ## 3. Deploy de infraestructura del VPS
 

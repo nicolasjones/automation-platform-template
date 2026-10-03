@@ -31,3 +31,4 @@ node scripts/migrar-supabase-cloud.mjs --entorno staging|production
 
 - No hace `supabase link` ni persiste ningún estado de "proyecto vinculado" entre corridas.
 - No crea el proyecto Supabase cloud — asume que ya existe y que `SUPABASE_DB_URL` ya apunta a él (ver `spec.md` → Assumptions).
+- No valida si una migración es destructiva (FR-012) — eso es responsabilidad de `scripts/validar-migraciones-aditivas.mjs`, un paso previo y separado en `migraciones-cloud.yml`, no de este script.
