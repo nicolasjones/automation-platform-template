@@ -54,11 +54,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T009 [P] [US2] Agregar `openssh-client` a `infra/runner/Dockerfile` (requerido para que el runner controle `DOCKER_HOST=ssh://...`; ver `research.md` §1 y `contracts/cli-deploy-vps-ci.md`)
-- [ ] T010 [US2] Crear `.github/workflows/deploy-infraestructura-vps.yml` con los jobs `staging`/`production` según `contracts/workflow-gate.md` y `contracts/cli-deploy-vps-ci.md`: decodifica el secret `VPS_SSH_PRIVATE_KEY` a un archivo temporal (permisos 600), exporta `DOCKER_HOST=ssh://<usuario>@<host>`, sintetiza `.env.<entorno>` en el workspace del job desde los demás secrets del Environment, invoca `pnpm deploy:vps -- <entorno>`, disparado por `push` a los `paths` listados en `contracts/workflow-gate.md` (depende de T009)
-- [ ] T011 [P] [US2] Agregar las claves `VPS_SSH_PRIVATE_KEY=`, `VPS_SSH_USER=`, `VPS_SSH_HOST=` (sin valores) a `.env.example`, documentando que las demás claves que hoy viven en `.env.<entorno>` del VPS (Kestra, Superset, Nango) pasan a ser secrets del mismo Environment
-- [ ] T012 [US2] Agregar la capacidad `vps-deploy-gate` a `template-capabilities.json` (paths: `.github/workflows/deploy-infraestructura-vps.yml`, `infra/runner/Dockerfile`)
-- [ ] T013 [US2] Completar la sección "Deploy de infraestructura del VPS" de `docs/adoptar-cicd-staging-produccion.md` y actualizar `docs/deployment.md` para reflejar que el deploy a VPS ya no requiere SSH manual ni `.env.<entorno>` persistente
+- [X] T009 [P] [US2] Agregar `openssh-client` a `infra/runner/Dockerfile` (requerido para que el runner controle `DOCKER_HOST=ssh://...`; ver `research.md` §1 y `contracts/cli-deploy-vps-ci.md`)
+- [X] T010 [US2] Crear `.github/workflows/deploy-infraestructura-vps.yml` con los jobs `staging`/`production` según `contracts/workflow-gate.md` y `contracts/cli-deploy-vps-ci.md`: decodifica el secret `VPS_SSH_PRIVATE_KEY` a un archivo temporal (permisos 600), exporta `DOCKER_HOST=ssh://<usuario>@<host>`, sintetiza `.env.<entorno>` en el workspace del job desde los demás secrets del Environment, invoca `pnpm deploy:vps -- <entorno>`, disparado por `push` a los `paths` listados en `contracts/workflow-gate.md` (depende de T009)
+- [X] T011 [P] [US2] Agregar las claves `VPS_SSH_PRIVATE_KEY=`, `VPS_SSH_USER=`, `VPS_SSH_HOST=` (sin valores) a `.env.example`, documentando que las demás claves que hoy viven en `.env.<entorno>` del VPS (Kestra, Superset, Nango) pasan a ser secrets del mismo Environment
+- [X] T012 [US2] Agregar la capacidad `vps-deploy-gate` a `template-capabilities.json` (paths: `.github/workflows/deploy-infraestructura-vps.yml`, `infra/runner/Dockerfile`)
+- [X] T013 [US2] Completar la sección "Deploy de infraestructura del VPS" de `docs/adoptar-cicd-staging-produccion.md` y actualizar `docs/deployment.md` para reflejar que el deploy a VPS ya no requiere SSH manual ni `.env.<entorno>` persistente
 
 **Checkpoint**: User Stories 1 y 2 funcionan de forma independiente — ejecutar Escenario 2 de `quickstart.md`.
 

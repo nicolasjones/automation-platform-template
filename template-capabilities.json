@@ -9,6 +9,12 @@
       "paths": ["scripts/migrar-supabase-cloud.mjs", "scripts/migrar-supabase-cloud.test.mjs", ".github/workflows/migraciones-cloud.yml"]
     },
     {
+      "id": "vps-deploy-gate",
+      "version": "1.0.0",
+      "title": "CI de deploy de infraestructura del VPS con gate staging-producción",
+      "paths": [".github/workflows/deploy-infraestructura-vps.yml", "infra/runner/Dockerfile"]
+    },
+    {
       "id": "worker-execution-cycle",
       "version": "1.3.0",
       "title": "Ciclo auditable de ejecuciones de workers",

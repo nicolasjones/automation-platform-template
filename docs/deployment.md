@@ -237,6 +237,24 @@ borraba en cada PR, también en los PR del producto que copió el workflow (ver
   `supabase stop --project-id ci-<repo> --no-backup`.
 - Adopción en productos derivados: `docs/adoptar-ci-base-aislada.md`.
 
+### Deploy de infraestructura del VPS (staging → producción)
+
+`.github/workflows/deploy-infraestructura-vps.yml` (spec
+`20261003-105444-cicd-staging-produccion`) corre `pnpm deploy:vps -- <entorno>`
+sin que nadie se conecte por SSH a mano. El job controla el Docker remoto
+del VPS con `DOCKER_HOST=ssh://usuario@host`, usando una clave SSH (secret
+`VPS_SSH_PRIVATE_KEY`, mismo patrón que `SECRET_ORQUESTACION_SSH_PRIVATE_KEY`
+de la spec 014) cargada en un `ssh-agent` efímero del job. El archivo
+`.env.<entorno>` que `scripts/deploy-vps.mjs` sigue exigiendo (sin cambios
+de código) se sintetiza en el workspace del job desde el secret
+`VPS_DEPLOY_ENV` — nunca vuelve a persistir en el filesystem del VPS. Mismo
+gate de dos jobs que el resto de esta spec: `production` tiene
+`needs: staging` y corre bajo un GitHub Environment con required reviewers.
+`infra/runner/Dockerfile` agrega `openssh-client` para poder usar
+`DOCKER_HOST=ssh://...`. Detalle de diseño en
+`specs/20261003-105444-cicd-staging-produccion/research.md` §1-2 y
+`contracts/cli-deploy-vps-ci.md`.
+
 ### Migraciones cloud (staging → producción)
 
 `.github/workflows/migraciones-cloud.yml` (spec

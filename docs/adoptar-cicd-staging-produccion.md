@@ -48,8 +48,9 @@ Ver `specs/20261003-105444-cicd-staging-produccion/contracts/cli-deploy-vps-ci.m
 y `.github/workflows/deploy-infraestructura-vps.yml`.
 
 - Secrets por Environment: `VPS_SSH_PRIVATE_KEY` (Base64), `VPS_SSH_USER`,
-  `VPS_SSH_HOST`, y las credenciales que hoy viven en `.env.<entorno>` del
-  VPS (Kestra, Superset, Nango).
+  `VPS_SSH_HOST`, y `VPS_DEPLOY_ENV` (el bloque completo de variables que
+  hoy viven en `.env.<entorno>` del VPS — Kestra, Superset, Nango — que el
+  workflow sintetiza como archivo transitorio en el workspace del job).
 - El runner self-hosted necesita `openssh-client` instalado
   (`infra/runner/Dockerfile`).
 - Dispara en `push` a los `paths` listados en el contrato de gate.

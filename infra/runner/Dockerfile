@@ -17,8 +17,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get update && apt-get install -y --no-install-recommends \
       docker-ce-cli docker-compose-plugin nodejs \
       postgresql-client libtap-parser-sourcehandler-pgtap-perl \
+      openssh-client \
     && npm install -g pnpm@11.19.0 \
     && rm -rf /var/lib/apt/lists/*
+# openssh-client: el job de deploy de infraestructura del VPS (spec
+# 20261003-105444-cicd-staging-produccion) controla el Docker remoto del VPS
+# vía DOCKER_HOST=ssh://usuario@host — el CLI de Docker delega en el binario
+# `ssh` del sistema, que esta imagen no traía.
 # pg_prove (del paquete pgtap de arriba) corre los tests pgTAP directo
 # contra el Postgres del host (via host.docker.internal), sin pasar por
 # el contenedor interno que arma "supabase test db" — ese contenedor
