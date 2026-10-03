@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "template_repository": "Agenmatica/automation-platform-template",
+  "template_repository": "nicolasjones/automation-platform-template",
   "capabilities": [
     {
       "id": "cloud-migrations-gate",
@@ -70,7 +70,7 @@
     },
     {
       "id": "template-capability-sync",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "title": "Adopción versionada de capacidades del template",
       "paths": ["scripts/verificar-adopcion-template.mjs", "scripts/verificar-adopcion-template.test.mjs", "scripts/verificar-versiones-capacidades.mjs", ".github/workflows/sync-template.yml"]
     },

@@ -37,7 +37,7 @@ el workflow abre o actualiza una issue con instrucciones antes de marcar la
 ejecución como fallida. El seguimiento se identifica por título y no requiere
 etiquetas preconfiguradas en el producto. El nombre
 del repositorio puede configurarse con la variable Actions `TEMPLATE_REPOSITORY`;
-por defecto es `Agenmatica/automation-platform-template`.
+por defecto es `nicolasjones/automation-platform-template`.
 
 Las issues abiertas sólo informan trabajo pendiente. Cada adopción se entrega
 en un PR del producto con sus validaciones funcionales, migraciones aditivas y
