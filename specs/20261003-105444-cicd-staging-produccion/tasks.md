@@ -72,10 +72,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T014 [US3] Crear `.github/workflows/publicar-flows-kestra.yml` con los jobs `staging`/`production` según `contracts/workflow-gate.md`, disparado por `push` a `infra/kestra/flows/**`, cada job invocando `node infra/kestra/desplegar-flow.mjs` (sin cambios de código) con `KESTRA_BASIC_AUTH_USERNAME`/`PASSWORD` y `--kestra-url` del Environment correspondiente
-- [ ] T015 [P] [US3] Agregar las claves `KESTRA_BASIC_AUTH_USERNAME=`/`KESTRA_BASIC_AUTH_PASSWORD=` por entorno (sin valores, si no existían ya) a `.env.example`, aclarando que ahora también viven como secrets de los Environments `publicar-flows-kestra-*`
-- [ ] T016 [US3] Incrementar la versión de la capacidad `safe-kestra-flow-publication` en `template-capabilities.json` y agregar `.github/workflows/publicar-flows-kestra.yml` a sus `paths`
-- [ ] T017 [US3] Completar la sección "Publicación de flows" de `docs/adoptar-cicd-staging-produccion.md` y actualizar `docs/deployment.md` para reflejar que la publicación de flows ya no es un paso manual
+- [X] T014 [US3] Crear `.github/workflows/publicar-flows-kestra.yml` con los jobs `staging`/`production` según `contracts/workflow-gate.md`, disparado por `push` a `infra/kestra/flows/**`, cada job invocando `node infra/kestra/desplegar-flow.mjs` (sin cambios de código) con `KESTRA_BASIC_AUTH_USERNAME`/`PASSWORD` y `--kestra-url` del Environment correspondiente
+- [X] T015 [P] [US3] Agregar las claves `KESTRA_BASIC_AUTH_USERNAME=`/`KESTRA_BASIC_AUTH_PASSWORD=` por entorno (sin valores, si no existían ya) a `.env.example`, aclarando que ahora también viven como secrets de los Environments `publicar-flows-kestra-*`
+- [X] T016 [US3] Incrementar la versión de la capacidad `safe-kestra-flow-publication` en `template-capabilities.json` y agregar `.github/workflows/publicar-flows-kestra.yml` a sus `paths`
+- [X] T017 [US3] Completar la sección "Publicación de flows" de `docs/adoptar-cicd-staging-produccion.md` y actualizar `docs/deployment.md` para reflejar que la publicación de flows ya no es un paso manual
 
 **Checkpoint**: User Stories 1, 2 y 3 funcionan de forma independiente — ejecutar Escenario 3 de `quickstart.md`.
 

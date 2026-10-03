@@ -255,6 +255,17 @@ gate de dos jobs que el resto de esta spec: `production` tiene
 `specs/20261003-105444-cicd-staging-produccion/research.md` §1-2 y
 `contracts/cli-deploy-vps-ci.md`.
 
+### Publicación de flows de Kestra (staging → producción)
+
+`.github/workflows/publicar-flows-kestra.yml` (spec
+`20261003-105444-cicd-staging-produccion`) publica todos los flows de
+`infra/kestra/flows/*.yml` contra el Kestra de cada entorno corriendo
+`infra/kestra/desplegar-flow.mjs` sin ningún cambio de código — ya aceptaba
+credenciales y URL por variable de entorno o flag. `id` y `namespace` se
+leen del propio YAML de cada flow. Mismo gate de dos jobs. Secrets por
+Environment: `KESTRA_BASIC_AUTH_USERNAME`, `KESTRA_BASIC_AUTH_PASSWORD`,
+`KESTRA_PUBLIC_URL`.
+
 ### Migraciones cloud (staging → producción)
 
 `.github/workflows/migraciones-cloud.yml` (spec

@@ -52,9 +52,9 @@
     },
     {
       "id": "safe-kestra-flow-publication",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "title": "Publicación segura de flows de Kestra",
-      "paths": ["infra/kestra/desplegar-flow.mjs", "infra/kestra/desplegar-flow.test.mjs"]
+      "paths": ["infra/kestra/desplegar-flow.mjs", "infra/kestra/desplegar-flow.test.mjs", ".github/workflows/publicar-flows-kestra.yml"]
     },
     {
       "id": "template-capability-sync",

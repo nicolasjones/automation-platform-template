@@ -60,8 +60,9 @@ y `.github/workflows/deploy-infraestructura-vps.yml`.
 Ver `.github/workflows/publicar-flows-kestra.yml`. Reutiliza
 `infra/kestra/desplegar-flow.mjs` sin cambios de código.
 
-- Secrets por Environment: `KESTRA_BASIC_AUTH_USERNAME` /
-  `KESTRA_BASIC_AUTH_PASSWORD`.
+- Secrets por Environment: `KESTRA_BASIC_AUTH_USERNAME`,
+  `KESTRA_BASIC_AUTH_PASSWORD` y `KESTRA_PUBLIC_URL` (mismo nombre que ya usa
+  `.env.example` para el dominio HTTPS de Kestra en ese entorno).
 - Dispara en `push` a `infra/kestra/flows/**`.
 
 ## 5. Import de dashboards de Superset (mecanismo sin wiring automático)
