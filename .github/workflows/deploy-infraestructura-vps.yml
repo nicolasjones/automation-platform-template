@@ -27,6 +27,12 @@ name: Deploy infraestructura VPS
 # error real de conexión (host inalcanzable, DNS, etc.), dejando el job sin
 # ningún rastro del motivo cuando fallaba — encontrado en T025 al disparar
 # producción por primera vez.
+#
+# Playwright no dispara este workflow ni lo despliega scripts/deploy-vps.mjs:
+# a diferencia de Kestra/Superset/Nango no es un producto de plataforma
+# compartido — cada cliente corre su propia instancia dedicada. Tratarlo
+# como compartido chocó en T025 contra una instancia dedicada real ya
+# corriendo en el mismo puerto del VPS de producción.
 
 on:
   push:
@@ -35,7 +41,6 @@ on:
       - "infra/kestra/compose*.yaml"
       - "infra/superset/compose*.yaml"
       - "infra/nango/compose*.yaml"
-      - "infra/playwright/compose*.yaml"
       - "scripts/deploy-vps.mjs"
       - ".github/workflows/deploy-infraestructura-vps.yml"
   workflow_dispatch: {}

@@ -42,7 +42,7 @@ jobs:
 | Workflow | `paths` que dispara `staging` |
 |---|---|
 | `migraciones-cloud.yml` | `supabase/migrations/**` |
-| `deploy-infraestructura-vps.yml` | `infra/kestra/compose*.yaml`, `infra/superset/compose*.yaml`, `infra/nango/compose*.yaml`, `infra/playwright/compose*.yaml`, `scripts/deploy-vps.mjs` |
+| `deploy-infraestructura-vps.yml` | `infra/kestra/compose*.yaml`, `infra/superset/compose*.yaml`, `infra/nango/compose*.yaml`, `scripts/deploy-vps.mjs` |
 | `publicar-flows-kestra.yml` | `infra/kestra/flows/**` |
 
 ## Edge cases cubiertos por este contrato
