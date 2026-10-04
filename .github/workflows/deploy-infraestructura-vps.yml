@@ -22,6 +22,11 @@ name: Deploy infraestructura VPS
 # required reviewers (plan de pago no disponible aquí). Decisión del
 # coordinador, ver tasks.md T027. Los Environments se conservan para
 # separar secrets por entorno; solo se cae la regla de required reviewers.
+#
+# ssh-keyscan ya no redirige su stderr a /dev/null: silenciaba cualquier
+# error real de conexión (host inalcanzable, DNS, etc.), dejando el job sin
+# ningún rastro del motivo cuando fallaba — encontrado en T025 al disparar
+# producción por primera vez.
 
 on:
   push:
@@ -61,7 +66,7 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > ~/.ssh/vps_deploy_key
           chmod 600 ~/.ssh/vps_deploy_key
-          ssh-keyscan -H "$VPS_SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan -H "$VPS_SSH_HOST" >> ~/.ssh/known_hosts
           eval "$(ssh-agent -s)"
           echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
           echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
@@ -107,7 +112,7 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > ~/.ssh/vps_deploy_key
           chmod 600 ~/.ssh/vps_deploy_key
-          ssh-keyscan -H "$VPS_SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan -H "$VPS_SSH_HOST" >> ~/.ssh/known_hosts
           eval "$(ssh-agent -s)"
           echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
           echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
