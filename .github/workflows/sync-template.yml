@@ -63,7 +63,7 @@ jobs:
         if: steps.producto.outputs.aplica == 'true' && steps.credencial.outputs.configurada == 'true'
         uses: actions/checkout@v4
         with:
-          repository: ${{ vars.TEMPLATE_REPOSITORY || 'Agenmatica/automation-platform-template' }}
+          repository: ${{ vars.TEMPLATE_REPOSITORY || 'nicolasjones/automation-platform-template' }}
           ref: main
           token: ${{ secrets.TEMPLATE_READ_TOKEN }}
           path: .template
