@@ -22,4 +22,5 @@ Este contrato documenta el **uso desde el workflow de GitHub Actions**, no un ca
 ## Edge cases
 
 - Clave SSH ausente o mal formada en el secret: el paso de decodificación falla antes de llegar a `docker`, con un error que identifica el secret, no una conexión Docker ambigua.
-- Host del VPS inalcanzable: `docker compose ... config --quiet` (primer comando que ya corre `deploy-vps.mjs`) falla rápido, antes de intentar `pull`/`build`/`up`.
+- Host del VPS inalcanzable: `ssh-keyscan` (antes de `docker compose`) falla con el error real de conexión visible en el log — ya no se silencia con `2>/dev/null` (encontrado en T025: silenciaba el motivo real y dejaba el job sin ningún rastro de por qué falló).
+- Bind mounts relativos en un `compose.yaml` (`./archivo:/destino`): no funcionan con `DOCKER_HOST=ssh` remoto — el daemon del VPS no tiene el checkout del runner en su filesystem. Cualquier archivo que un servicio necesite debe hornearse en la imagen (`COPY` en su `Dockerfile`), como ya hace `infra/superset/Dockerfile`. Ver `research.md` §2.
