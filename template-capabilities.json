@@ -16,7 +16,7 @@
     },
     {
       "id": "vps-deploy-gate",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "title": "CI de deploy de infraestructura del VPS con gate staging-producción",
       "paths": [".github/workflows/deploy-infraestructura-vps.yml", "infra/runner/Dockerfile"]
     },
@@ -58,7 +58,7 @@
     },
     {
       "id": "portable-typescript-tooling",
-      "version": "1.2.2",
+      "version": "1.2.3",
       "title": "Tooling operativo portable en Node ESM",
       "paths": ["infra/kestra/renderizar-flow.mjs", "infra/ia/", "scripts/deploy-vps.mjs", "scripts/deploy-vps.test.mjs", "scripts/reset-db-ci.mjs", "infra/runner/entrypoint.mjs"]
     },

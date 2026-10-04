@@ -15,7 +15,16 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const envFile = path.join(root, `.env.${environment}`);
 try { await access(envFile); } catch { throw new Error(`No existe .env.${environment} en el VPS.`); }
 
-for (const product of ['kestra', 'superset', 'playwright', 'nango']) {
+// Playwright NO entra en este loop: a diferencia de Kestra/Superset/Nango,
+// no es un producto de plataforma compartido — cada cliente corre su propia
+// instancia dedicada (decisión ya tomada y documentada en el producto
+// derivado; `docs/architecture.md` ya dejaba esto como pregunta abierta:
+// "la IP del VPS... queda por resolver cuando se escriba el primer flow
+// real que lo use"). Tratarlo como compartido en este mecanismo genérico
+// hizo que el deploy a producción chocara en T025 con
+// "Bind for 127.0.0.1:3103 failed: port is already allocated" contra una
+// instancia dedicada real ya corriendo en el mismo VPS.
+for (const product of ['kestra', 'superset', 'nango']) {
   const productDir = path.join(root, 'infra', product);
   const composeBase = `infra/${product}/compose.yaml`;
   const composeVps = `infra/${product}/compose.vps.yaml`;

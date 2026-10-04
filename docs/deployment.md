@@ -31,8 +31,15 @@ supere el plan gratuito de Vercel/Supabase ni sea necesario ampliar el VPS.
 - `supabase/`: proyecto Supabase Cloud de producción mediante migraciones.
 - `infra/kestra/compose.yaml`: Kestra en el VPS, detrás de HTTPS/reverse proxy.
 - `infra/superset/compose.yaml`: Superset en el VPS, detrás de HTTPS/reverse proxy.
-- `infra/playwright/compose.yaml`: servidor de Playwright en el VPS, sólo
-  accesible para Kestra (no pasa por el reverse proxy, no es público).
+- `infra/playwright/compose.yaml`: solo para desarrollo local
+  (`pnpm dev:playwright`). **No** es un producto de plataforma compartido
+  como Kestra/Superset/Nango — cada cliente corre su propia instancia
+  dedicada de Playwright (decisión tomada y documentada en el producto
+  derivado), así que `scripts/deploy-vps.mjs` no lo despliega al VPS
+  central. `docs/architecture.md` ya dejaba esto como pregunta abierta;
+  tratarlo como compartido en el mecanismo de CI de
+  `20261003-105444-cicd-staging-produccion` chocó en T025 contra una
+  instancia dedicada real ya corriendo en el mismo puerto.
 - `infra/nango/compose.yaml` + `infra/nango/compose.vps.yaml`: Nango
   self-hosted en el VPS, incluido en `scripts/deploy-vps.mjs`, detrás de
   HTTPS/reverse proxy propio del producto derivado — el callback OAuth

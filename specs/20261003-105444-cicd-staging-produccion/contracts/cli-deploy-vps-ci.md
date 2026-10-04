@@ -13,7 +13,8 @@ Este contrato documenta el **uso desde el workflow de GitHub Actions**, no un ca
 ## Invariantes que el script ya cumple y este contrato no toca
 
 - `scripts/deploy-vps.mjs` sigue exigiendo que `--env-file` exista y sea legible (línea 10) — eso ahora lo garantiza el paso 3 arriba, no un archivo persistente del VPS.
-- `docker compose ... pull --ignore-buildable / build / up -d --remove-orphans` por producto (`kestra`, `superset`, `playwright`, `nango`) sin cambios.
+- `docker compose ... pull --ignore-buildable / build / up -d --remove-orphans` por producto (`kestra`, `superset`, `nango`) sin cambios.
+- Playwright no entra en este loop — no es un producto de plataforma compartido, cada cliente corre su propia instancia dedicada (hallazgo real de T025: tratarlo como compartido chocó contra una instancia dedicada ya corriendo en el mismo puerto del VPS de producción). Ver `research.md` §2.
 
 ## Requisito de imagen del runner (nuevo)
 

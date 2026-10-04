@@ -39,7 +39,7 @@ Archivo SQL versionado en `supabase/migrations/`. Esta spec no cambia su formato
 
 ## Despliegue de infraestructura (ya existente, sin cambios de forma)
 
-Lo que ya orquesta `scripts/deploy-vps.mjs` por producto (`kestra`, `superset`, `playwright`, `nango`) contra un entorno. Esta spec no cambia qué productos despliega ni cómo — cambia de dónde obtiene las credenciales y cómo alcanza el Docker del VPS (ver `research.md` §1-2).
+Lo que ya orquesta `scripts/deploy-vps.mjs` por producto (`kestra`, `superset`, `nango`) contra un entorno. Playwright queda deliberadamente fuera de este loop — no es un producto de plataforma compartido, cada cliente corre su propia instancia dedicada (hallazgo real de T025, ver `research.md`). Esta spec no cambia cómo se despliega cada producto incluido — cambia de dónde obtiene las credenciales y cómo alcanza el Docker del VPS (ver `research.md` §1-2).
 
 ## Flow de orquestación (ya existente, sin cambios de forma)
 
