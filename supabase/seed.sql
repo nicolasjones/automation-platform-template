@@ -46,3 +46,17 @@ begin
   values (v_user_id)
   on conflict (user_id) do nothing;
 end $$;
+
+-- Completa el registro de chat-ia cuando la migración
+-- 20261005000000_chat_companion_mechanism.sql no pudo hacerlo (reset desde
+-- cero: migraciones corren antes que este seed, sin superadmin todavía).
+do $$
+begin
+  if not exists (select 1 from public.features where id = 'chat-ia') then
+    perform public.registrar_feature(
+      'chat-ia',
+      'Chat',
+      'Chat conversacional con acceso a los datos de las funcionalidades habilitadas de la organización.'
+    );
+  end if;
+end $$;
