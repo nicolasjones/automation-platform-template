@@ -66,3 +66,12 @@ concepto de dominio del producto de origen.
 - Extensión `pgvector` — ya habilitada en este template desde
   `20260907011152_enable_pgvector.sql`, sin cambios nuevos de infra.
 - Panel de funcionalidades (`features`/`tiene_feature`) — ya existente.
+
+## Desvíos reales encontrados
+
+- **1.0.1**: `documentos.organizacion_id`/`subido_por` y
+  `versiones_documento.subida_por` eran NOT NULL sin default — la UI
+  real (`apps/web/src/pages/ia/documentos.tsx`) nunca los manda en el
+  insert, solo `{nombre}` y `{id, documento_id, storage_path, estado}`
+  respectivamente. Encontrado probando en vivo el port-back en un
+  producto derivado (estudio-contable-automation PR #33).
