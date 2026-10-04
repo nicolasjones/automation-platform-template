@@ -13,6 +13,7 @@
     "dev:playwright": "docker compose -f infra/playwright/compose.yaml up -d",
     "dev:runner": "docker compose --env-file .env -f infra/runner/compose.yaml up -d --build",
     "dev:nango": "docker compose -f infra/nango/compose.yaml up -d",
+    "dev:mcp-server": "docker compose -f infra/mcp-server/compose.yaml up -d --build",
     "dev:down:refine": "docker compose -f infra/refine/compose.yaml down",
     "dev:down:supabase": "supabase stop --project-id automation-platform-template-supabase-dev",
     "dev:down:kestra": "docker compose -f infra/kestra/compose.yaml down",
@@ -20,11 +21,12 @@
     "dev:down:playwright": "docker compose -f infra/playwright/compose.yaml down",
     "dev:down:runner": "docker compose --env-file .env -f infra/runner/compose.yaml down",
     "dev:down:nango": "docker compose -f infra/nango/compose.yaml down",
+    "dev:down:mcp-server": "docker compose -f infra/mcp-server/compose.yaml down",
     "build": "pnpm --filter @platform/web build",
     "lint": "pnpm --filter @platform/web lint",
     "test": "pnpm test:template:adoption && pnpm --filter @platform/web test && pnpm test:ia && pnpm test:db",
     "test:web": "pnpm --filter @platform/web test",
-    "test:ia": "pnpm --filter @platform/ia --filter @platform/ia-navegacion test",
+    "test:ia": "pnpm --filter @platform/ia --filter @platform/ia-navegacion --filter @platform/mcp-server test",
     "test:db": "supabase test db --local",
     "test:db:ci": "node scripts/supabase-ci.mjs verificar && PGPASSWORD=postgres PGSSLMODE=disable pg_prove --host host.docker.internal --port $SUPABASE_DB_PORT --username postgres --dbname postgres supabase/tests/database/*.sql",
     "db:reset:ci": "node scripts/reset-db-ci.mjs",
@@ -66,13 +68,14 @@
     "template:adoption:check": "node scripts/verificar-adopcion-template.mjs --check",
     "template:capabilities:check": "node scripts/verificar-versiones-capacidades.mjs",
     "test:template:adoption": "node --test scripts/verificar-adopcion-template.test.mjs scripts/verificar-versiones-capacidades.test.mjs",
-    "infra:config": "pnpm infra:config:refine && pnpm infra:config:kestra && pnpm infra:config:superset && pnpm infra:config:playwright && pnpm infra:config:runner && pnpm infra:config:nango",
+    "infra:config": "pnpm infra:config:refine && pnpm infra:config:kestra && pnpm infra:config:superset && pnpm infra:config:playwright && pnpm infra:config:runner && pnpm infra:config:nango && pnpm infra:config:mcp-server",
     "infra:config:refine": "docker compose -f infra/refine/compose.yaml config --quiet",
     "infra:config:kestra": "docker compose -f infra/kestra/compose.yaml config --quiet",
     "infra:config:superset": "docker compose -f infra/superset/compose.yaml config --quiet",
     "infra:config:playwright": "docker compose -f infra/playwright/compose.yaml config --quiet",
     "infra:config:runner": "docker compose -f infra/runner/compose.yaml config --quiet",
-    "infra:config:nango": "docker compose -f infra/nango/compose.yaml config --quiet"
+    "infra:config:nango": "docker compose -f infra/nango/compose.yaml config --quiet",
+    "infra:config:mcp-server": "docker compose -f infra/mcp-server/compose.yaml config --quiet"
   },
   "devDependencies": {
     "supabase": "^2.57.2"

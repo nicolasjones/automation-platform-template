@@ -26,6 +26,7 @@ export function IaList() {
         <Button component={RouterLink} to="/ia/contratos">Contratos</Button>
         <Button component={RouterLink} to="/ia/politicas">Políticas</Button>
         <Button component={RouterLink} to="/ia/interacciones">Interacciones</Button>
+        <Button component={RouterLink} to="/ia/capacidades-mcp">Capacidades MCP</Button>
       </Stack>
       <MuiList>{proveedores.map((proveedor) => <ListItem key={proveedor.id}><ListItemText primary={proveedor.nombre} secondary={proveedor.habilitado ? 'Habilitado' : 'Pendiente de verificación'} /></ListItem>)}</MuiList>
     </List>

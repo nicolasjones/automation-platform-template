@@ -1,0 +1,34 @@
+name: automation-platform-template-mcp-server-dev
+
+services:
+  mcp-server:
+    build:
+      context: ../..
+      dockerfile: infra/mcp-server/Dockerfile
+      args:
+        MCP_SERVER_PORT: ${MCP_SERVER_PORT:-8787}
+    working_dir: /workspace
+    command: >-
+      sh -c "pnpm install --frozen-lockfile && pnpm --filter @platform/mcp-server dev"
+    environment:
+      CI: "true"
+      MCP_SERVER_PORT: ${MCP_SERVER_PORT:-8787}
+      # El servidor conecta a Supabase con la service-role key (nunca al
+      # navegador) para resolver credenciales y leer datos de negocio
+      # scoped por organización — ver docs/wiki/sistemas/mcp.md. Mismas
+      # variables que usa cualquier Edge Function de este proyecto.
+      SUPABASE_URL: ${SUPABASE_URL:-http://host.docker.internal:54321}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+    ports:
+      - "127.0.0.1:${MCP_SERVER_PORT:-8787}:${MCP_SERVER_PORT:-8787}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../..:/workspace
+      - mcp-server-node-modules:/workspace/node_modules
+      - mcp-server-pkg-node-modules:/workspace/packages/mcp-server/node_modules
+    restart: unless-stopped
+
+volumes:
+  mcp-server-node-modules:
+  mcp-server-pkg-node-modules:

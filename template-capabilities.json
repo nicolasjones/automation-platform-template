@@ -51,6 +51,12 @@
       "paths": ["packages/ia/", "supabase/migrations/20261003183000_esperando_aprobacion_ia.sql", "supabase/tests/database/capacidad_ia_gobernada.test.sql"]
     },
     {
+      "id": "mcp-server-mechanism",
+      "version": "1.0.0",
+      "title": "Servidor MCP genérico",
+      "paths": ["packages/mcp-server/", "infra/mcp-server/", "supabase/migrations/20261003230000_mcp_servidor_ia.sql", "supabase/migrations/20261003231600_mcp_ejecucion.sql", "supabase/migrations/20261003232000_mcp_credenciales_rpc.sql", "supabase/migrations/20261003233000_mcp_lectura_centralizada.sql", "supabase/migrations/20261003234000_mcp_listar_credenciales.sql", "apps/web/src/pages/ia/capacidades-mcp.tsx"]
+    },
+    {
       "id": "ai-navigation-fallback",
       "version": "1.0.0",
       "title": "Fallback de navegación asistido por IA",

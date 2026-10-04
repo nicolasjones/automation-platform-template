@@ -49,6 +49,7 @@ import { IaProveedores } from './pages/ia/proveedores'
 import { IaContratos } from './pages/ia/contratos'
 import { IaPoliticas } from './pages/ia/politicas'
 import { IaInteracciones } from './pages/ia/interacciones'
+import { IaCapacidadesMcp } from './pages/ia/capacidades-mcp'
 import './App.css'
 
 const theme = createTheme({
@@ -287,6 +288,7 @@ function App() {
                 <Route path="/ia/contratos" element={<IaContratos />} />
                 <Route path="/ia/politicas" element={<IaPoliticas />} />
                 <Route path="/ia/interacciones" element={<IaInteracciones />} />
+                <Route path="/ia/capacidades-mcp" element={<IaCapacidadesMcp />} />
               </Route>
 
               <Route
