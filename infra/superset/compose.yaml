@@ -66,10 +66,6 @@ services:
       # superset_config.py (spec 015) — sin esto, el contenedor nunca ve el
       # WEB_PORT del host y esas variantes quedan fijas en 3100.
       WEB_PORT: ${WEB_PORT:-3100}
-    volumes:
-      - ./superset_config.py:/app/pythonpath/superset_config.py:ro
-      - ./crear_cuenta_servicio_guest_token.py:/app/pythonpath/crear_cuenta_servicio_guest_token.py:ro
-      - ./configurar_embebido.py:/app/pythonpath/configurar_embebido.py:ro
     depends_on:
       superset-postgres:
         condition: service_healthy
@@ -90,8 +86,6 @@ services:
       # Puerto host configurable (spec 015); el bind interno de gunicorn y el
       # healthcheck siguen en 8088 dentro del contenedor, sin cambios.
       - "127.0.0.1:${SUPERSET_PORT:-8088}:8088"
-    volumes:
-      - ./superset_config.py:/app/pythonpath/superset_config.py:ro
     networks:
       default: {}
       # emitir-acceso-reporte (contenedor de Edge Functions de Supabase, otro
