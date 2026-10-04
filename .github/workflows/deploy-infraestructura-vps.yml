@@ -12,6 +12,13 @@ name: Deploy infraestructura VPS
 # y research.md §1-2. Todos los secrets se pasan por `env:`, nunca
 # interpolados directo en el texto de `run:` (evita que queden embebidos en
 # el comando ejecutado si el valor tuviera caracteres especiales).
+#
+# Gate: `staging` dispara solo en push (automático); `production` solo se
+# dispara manualmente desde la pestaña Actions ("Run workflow" →
+# workflow_dispatch) — alternativa sin costo a GitHub Environment +
+# required reviewers (plan de pago no disponible aquí). Decisión del
+# coordinador, ver tasks.md T027. Los Environments se conservan para
+# separar secrets por entorno; solo se cae la regla de required reviewers.
 
 on:
   push:
@@ -23,12 +30,14 @@ on:
       - "infra/playwright/compose*.yaml"
       - "scripts/deploy-vps.mjs"
       - ".github/workflows/deploy-infraestructura-vps.yml"
+  workflow_dispatch: {}
 
 permissions:
   contents: read
 
 jobs:
   staging:
+    if: github.event_name == 'push'
     runs-on: [self-hosted, platform-local]
     environment: deploy-infraestructura-vps-staging
     steps:
@@ -68,7 +77,7 @@ jobs:
           ssh-agent -k || true
 
   production:
-    needs: staging
+    if: github.event_name == 'workflow_dispatch'
     runs-on: [self-hosted, platform-local]
     environment: deploy-infraestructura-vps-production
     steps:

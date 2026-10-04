@@ -1,12 +1,15 @@
 name: Migraciones cloud
 
 # CI de migraciones de Supabase contra proyectos cloud por entorno (spec
-# 20261003-105444-cicd-staging-produccion). Gate nativo de GitHub: el job de
-# producción tiene `needs: staging` y corre bajo el Environment
-# `migraciones-cloud-production`, que se pausa hasta un click de aprobación
-# de un required reviewer configurado a mano en GitHub (no expresable en
-# YAML — ver docs/adoptar-cicd-staging-produccion.md). `staging` no tiene
-# reviewers y corre directo en cada push relevante.
+# 20261003-105444-cicd-staging-produccion). Gate: `staging` dispara solo en
+# push (automático); `production` solo se dispara manualmente desde la
+# pestaña Actions ("Run workflow" → workflow_dispatch) — alternativa sin
+# costo a GitHub Environment + required reviewers, que requiere un plan de
+# pago (Team/Enterprise) para repos privados y no estaba disponible aquí.
+# Decisión del coordinador, ver tasks.md T027. Los GitHub Environments se
+# conservan igual (separan los secrets `SUPABASE_DB_URL` de staging y
+# producción); solo se cae la regla de required reviewers, que vivía fuera
+# del YAML.
 #
 # Credenciales: SUPABASE_DB_URL es un secret por GitHub Environment (cadena
 # de conexión Postgres del proyecto cloud de ese entorno), nunca un access
@@ -25,12 +28,14 @@ on:
       - "scripts/migrar-supabase-cloud.mjs"
       - "scripts/validar-migraciones-aditivas.mjs"
       - ".github/workflows/migraciones-cloud.yml"
+  workflow_dispatch: {}
 
 permissions:
   contents: read
 
 jobs:
   staging:
+    if: github.event_name == 'push'
     runs-on: [self-hosted, platform-local]
     environment: migraciones-cloud-staging
     steps:
@@ -52,7 +57,7 @@ jobs:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
 
   production:
-    needs: staging
+    if: github.event_name == 'workflow_dispatch'
     runs-on: [self-hosted, platform-local]
     environment: migraciones-cloud-production
     steps:

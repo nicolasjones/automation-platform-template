@@ -38,9 +38,17 @@ Este research resuelve, a nivel técnico, las dos preguntas que el assessment de
 
 ## 6. Mecanismo de gate compartido (staging → producción)
 
-- **Decision**: Cada uno de los tres workflows automáticos (migraciones, deploy de infraestructura, publicación de flows) define dos jobs en el mismo archivo: `staging` (dispara en push, sin gate) y `production` (`needs: staging`, `environment: <nombre>-production` con required reviewers configurado en GitHub). No se introduce ninguna Action ni script de aprobación custom.
-- **Rationale**: Ya hay precedente exacto en el propio repo — `.github/workflows/worker-images.yml` ya usa `environment: worker-images-production`, aunque en un solo job (no necesita gate de dos fases porque no hay "staging" de una imagen). Esta spec generaliza ese mismo mecanismo a un segundo job con `needs`.
-- **Alternatives considered**: ninguna — es una decisión ya tomada por el coordinador en el intake (no rediseñar).
+- **Decision (original, intake)**: Cada uno de los tres workflows automáticos (migraciones, deploy de infraestructura, publicación de flows) define dos jobs en el mismo archivo: `staging` (dispara en push, sin gate) y `production` (`needs: staging`, `environment: <nombre>-production` con required reviewers configurado en GitHub). No se introduce ninguna Action ni script de aprobación custom.
+- **Rationale (original)**: Ya hay precedente exacto en el propio repo — `.github/workflows/worker-images.yml` ya usa `environment: worker-images-production`, aunque en un solo job (no necesita gate de dos fases porque no hay "staging" de una imagen). Esta spec generaliza ese mismo mecanismo a un segundo job con `needs`.
+- **Alternatives considered (original)**: ninguna — era una decisión ya tomada por el coordinador en el intake (no rediseñar).
+
+### Revisión (post-implementación, decisión del coordinador — ver `tasks.md` T027)
+
+- **Hallazgo**: la regla de protección "required reviewers" en GitHub Environments requiere un plan de pago (Team/Enterprise) para repositorios privados, o que el repositorio sea público. Verificado contra la API real: tanto el fork (`nicolasjones/automation-platform-template`) como el repo de la organización (`Agenmatica/automation-platform-template`) estaban en plan Free y el intento de crear la regla devolvía `422`. Ambos repos se hicieron públicos para desbloquear el PR; aun así, el coordinador decidió no depender de required reviewers como mecanismo central — ver próxima decisión.
+- **Decision (revisada)**: `production` deja de usar `needs: staging` + required reviewers. Pasa a dispararse exclusivamente por `workflow_dispatch` (alguien entra a la pestaña Actions y lo corre a propósito). `staging` sigue disparando solo por `push`. Los GitHub Environments se conservan — siguen separando los secrets de cada entorno, que no depende de ninguna regla de pago — solo se cae el campo de reviewers requeridos.
+- **Rationale (revisada)**: es la alternativa sin costo que preserva la intención original (producción no se despliega sola; alguien tiene que decidirlo activamente) sin depender de una función de plan de pago. No requiere ninguna Action ni script custom — `workflow_dispatch` es un trigger nativo de GitHub Actions.
+- **Alternatives considered (revisada)**: (a) pagar GitHub Team/Enterprise para mantener required reviewers — descartado por costo; (b) un script/Action de aprobación custom (p. ej. comentario en un issue) — descartado, contradice la regla del propio `CLAUDE.md`/intake de "nativo de GitHub, no hay que construir nada custom"; `workflow_dispatch` sigue siendo 100% nativo.
+- **Trade-off aceptado**: sin `needs`, nada impide disparar `production` para un commit cuyo `staging` nunca corrió o falló — la responsabilidad de verificar eso antes de tocar "Run workflow" queda en la persona que lo dispara, no en el YAML. Documentado en `contracts/workflow-gate.md` → Edge cases.
 
 ## 7. Documentación y catálogo de capacidades
 

@@ -248,8 +248,10 @@ de la spec 014) cargada en un `ssh-agent` efímero del job. El archivo
 `.env.<entorno>` que `scripts/deploy-vps.mjs` sigue exigiendo (sin cambios
 de código) se sintetiza en el workspace del job desde el secret
 `VPS_DEPLOY_ENV` — nunca vuelve a persistir en el filesystem del VPS. Mismo
-gate de dos jobs que el resto de esta spec: `production` tiene
-`needs: staging` y corre bajo un GitHub Environment con required reviewers.
+gate que el resto de esta spec: `staging` dispara en cada push relevante;
+`production` solo corre si alguien lo dispara a mano desde Actions
+(`workflow_dispatch`) — alternativa sin costo a required reviewers, que
+necesita un plan de pago no disponible aquí (ver tasks.md T027).
 `infra/runner/Dockerfile` agrega `openssh-client` para poder usar
 `DOCKER_HOST=ssh://...`. Detalle de diseño en
 `specs/20261003-105444-cicd-staging-produccion/research.md` §1-2 y
@@ -275,9 +277,10 @@ producto derivado exporta uno real. Ver
 `infra/kestra/flows/*.yml` contra el Kestra de cada entorno corriendo
 `infra/kestra/desplegar-flow.mjs` sin ningún cambio de código — ya aceptaba
 credenciales y URL por variable de entorno o flag. `id` y `namespace` se
-leen del propio YAML de cada flow. Mismo gate de dos jobs. Secrets por
-Environment: `KESTRA_BASIC_AUTH_USERNAME`, `KESTRA_BASIC_AUTH_PASSWORD`,
-`KESTRA_PUBLIC_URL`.
+leen del propio YAML de cada flow. Mismo gate que el resto de esta spec:
+`staging` por push, `production` solo por `workflow_dispatch` manual.
+Secrets por Environment: `KESTRA_BASIC_AUTH_USERNAME`,
+`KESTRA_BASIC_AUTH_PASSWORD`, `KESTRA_PUBLIC_URL`.
 
 ### Migraciones cloud (staging → producción)
 
@@ -285,9 +288,11 @@ Environment: `KESTRA_BASIC_AUTH_USERNAME`, `KESTRA_BASIC_AUTH_PASSWORD`,
 `20261003-105444-cicd-staging-produccion`) aplica `supabase/migrations/**`
 contra el proyecto Supabase cloud de cada entorno con `scripts/migrar-supabase-cloud.mjs`
 (`supabase db push --db-url`). Ya no es un paso manual: push a `main` dispara
-el job `staging` sin gate; el job `production` tiene `needs: staging` y
-corre bajo el GitHub Environment `migraciones-cloud-production`, pausado
-hasta que un required reviewer lo aprueba desde la pestaña Actions.
+el job `staging` automáticamente; el job `production` corre bajo el GitHub
+Environment `migraciones-cloud-production` solo cuando alguien lo dispara a
+mano desde la pestaña Actions (`workflow_dispatch`) — alternativa sin costo
+a required reviewers, que necesita un plan de pago no disponible aquí (ver
+tasks.md T027 de la spec).
 `SUPABASE_DB_URL` es un secret por Environment — una cadena de conexión
 acotada al proyecto, no un access token de cuenta. Antes de aplicar nada,
 `scripts/validar-migraciones-aditivas.mjs` rechaza cualquier migración

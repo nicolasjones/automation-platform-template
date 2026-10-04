@@ -4,6 +4,8 @@
 
 **Input**: Feature specification from `specs/20261003-105444-cicd-staging-produccion/spec.md`
 
+**Actualización (decisión del coordinador, ver `tasks.md` T027)**: donde este plan dice "`needs` + GitHub Environment de producción con required reviewers", leer "`production` disparado manualmente vía `workflow_dispatch`, sin `needs`" — required reviewers resultó no estar disponible sin un plan de pago de GitHub. Detalle en `research.md` §6 (revisado) y `contracts/workflow-gate.md`.
+
 ## Summary
 
 Extender el patrón "push → deploy automático a staging → aprobación manual → producción" (ya vigente para la app web vía Vercel y las imágenes de workers vía `worker-images.yml`) a los tres componentes que hoy son manuales — migraciones de Supabase cloud, deploy de infraestructura del VPS, y publicación de flows de Kestra — usando el mismo gate nativo de GitHub Actions (dos jobs por workflow, `needs` + GitHub Environment de producción con required reviewers), y dejar listo un cuarto mecanismo (wrapper de import de dashboards de Superset) sin wiring automático todavía. El enfoque técnico prioriza reutilizar scripts ya existentes (`scripts/deploy-vps.mjs`, `infra/kestra/desplegar-flow.mjs`) sin reescribirlos, resolviendo la conectividad del runner hacia el VPS real mediante `DOCKER_HOST=ssh://...` (mismo patrón SSH ya usado para el despacho de workers, spec 014) en vez de migrar el runner de máquina.
