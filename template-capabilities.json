@@ -124,7 +124,7 @@
     },
     {
       "id": "document-rag-mechanism",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "title": "Búsqueda documental genérica con IA (RAG)",
       "paths": ["supabase/migrations/20261005000000_rag_busqueda_documental.sql", "supabase/tests/database/rag_busqueda_documental.test.sql", "supabase/functions/indexar-documento/index.ts", "supabase/functions/preguntar-documentos/index.ts", "supabase/functions/_shared/embeddings.ts", "apps/web/src/pages/ia/documentos.tsx"]
     }
