@@ -1,9 +1,0 @@
-services:
-  playwright:
-    ports:
-      # Puerto host configurable (spec 015), mismo mapeo que compose.yaml.
-      - "127.0.0.1:${PLAYWRIGHT_PORT:-3103}:3000"
-
-# A diferencia de Kestra/Superset, este servicio no lo expone el reverse proxy
-# (nadie le pega desde afuera): solo lo consume Kestra, del mismo VPS. Se
-# mantiene el mismo mapeo de puerto en localhost que en desarrollo.
