@@ -20,6 +20,7 @@
     "local-ci-runners": { "version": "1.0.1", "status": "adopted", "evidence": "1.0.1 (2026-10-03): RUNNER_REPO corregido a nicolasjones/automation-platform-template — los contenedores reales ya se habían reiniciado contra ese repo, este commit pone al día el valor commiteado." },
     "catalog-sistema-externo": { "version": "1.0.0", "status": "adopted" },
     "mapeo-identificadores-externos": { "version": "1.0.0", "status": "adopted" },
-    "oauth-connections-nango": { "version": "1.0.0", "status": "adopted" }
+    "oauth-connections-nango": { "version": "1.0.0", "status": "adopted" },
+    "mcp-server-mechanism": { "version": "1.0.0", "status": "adopted" }
   }
 }
