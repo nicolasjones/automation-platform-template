@@ -11,7 +11,7 @@
     "ai-navigation-fallback": { "version": "1.0.0", "status": "adopted" },
     "portable-typescript-tooling": { "version": "1.2.0", "status": "adopted" },
     "safe-kestra-flow-publication": { "version": "1.1.0", "status": "adopted" },
-    "cloud-migrations-gate": { "version": "1.1.0", "status": "adopted" },
+    "cloud-migrations-gate": { "version": "1.1.1", "status": "adopted" },
     "vps-deploy-gate": { "version": "1.0.0", "status": "adopted" },
     "superset-dashboard-import": { "version": "1.0.0", "status": "adopted" },
     "template-capability-sync": { "version": "1.0.2", "status": "adopted", "evidence": "fallback de TEMPLATE_REPOSITORY corregido a nicolasjones/automation-platform-template, repo canónico correcto (2026-10-03)." },
