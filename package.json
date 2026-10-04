@@ -34,6 +34,7 @@
     "db:validar:aditivas": "node scripts/validar-migraciones-aditivas.mjs",
     "test:db:validar-aditivas": "node --test scripts/validar-migraciones-aditivas.test.mjs",
     "deploy:vps": "node scripts/deploy-vps.mjs",
+    "test:deploy-vps": "node --test scripts/deploy-vps.test.mjs",
     "kestra:render-flow": "node infra/kestra/renderizar-flow.mjs",
     "kestra:sincronizar-rol-local": "node infra/kestra/sincronizar-rol-orquestacion.mjs",
     "kestra:deploy-flow": "node infra/kestra/desplegar-flow.mjs",
