@@ -300,7 +300,11 @@ destructiva (`DROP TABLE`/`COLUMN`, `TRUNCATE`) que no documente su
 Reversión — misma convención ya vigente en `supabase/migrations/` (un
 comentario de encabezado con la palabra "Reversión" y los pasos para
 deshacerla), ignora los `DROP` que ya viven comentados como esa
-instrucción. Detalle de diseño y alternativas descartadas en
+instrucción. No flaguea `ALTER TABLE ... DROP CONSTRAINT/DEFAULT/NOT NULL`
+(redefinir un constraint no destruye datos) — corregido tras un falso
+positivo real contra `20261003183000_esperando_aprobacion_ia.sql` durante
+la validación end-to-end de esta capacidad. Detalle de diseño y
+alternativas descartadas en
 `specs/20261003-105444-cicd-staging-produccion/research.md`.
 
 ## Promoción simple
