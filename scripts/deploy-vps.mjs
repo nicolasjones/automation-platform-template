@@ -3,7 +3,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { run } from './operaciones.mjs';
 
-const environment = process.argv[2];
+// pnpm (confirmado en 11.19.0 y 12.3.4) no elimina el separador "--" al
+// reenviar argumentos a un script ("pnpm deploy:vps -- staging" invoca
+// `node scripts/deploy-vps.mjs -- staging`, con "--" como argv real) — a
+// diferencia de la convención documentada de npm/pnpm run. Se filtra
+// cualquier "--" literal en vez de asumir una posición fija, para que
+// funcione igual con o sin él.
+const environment = process.argv.slice(2).filter((value) => value !== '--')[0];
 if (!['staging', 'production'].includes(environment)) throw new Error('Uso: pnpm deploy:vps -- staging|production');
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const envFile = path.join(root, `.env.${environment}`);

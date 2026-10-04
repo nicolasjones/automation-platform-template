@@ -318,4 +318,8 @@ datos, permisos o automatizaciones, staging es obligatorio.
 
 En el VPS, `pnpm deploy:vps -- staging` o `pnpm deploy:vps -- production` despliega Kestra y
 Superset como proyectos Docker separados (`platform-<entorno>-kestra` y
-`platform-<entorno>-superset`).
+`platform-<entorno>-superset`). `scripts/deploy-vps.mjs` acepta el entorno
+con o sin el separador `--` (pnpm 11.19.0 y 12.3.4 confirmados reenviándolo
+literal al script en vez de eliminarlo, a diferencia de la convención
+documentada de npm/pnpm run) — hallazgo real de la validación end-to-end de
+`20261003-105444-cicd-staging-produccion`.
