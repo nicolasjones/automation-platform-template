@@ -4,7 +4,7 @@ Este contrato documenta el **uso desde el workflow de GitHub Actions**, no un ca
 
 ## Lo que hace el workflow antes de invocar el script (nuevo)
 
-1. Decodifica el secret `VPS_SSH_PRIVATE_KEY` del Environment activo (Base64) a un archivo temporal dentro del workspace del job, con permisos `600`.
+1. Escribe el secret `VPS_SSH_PRIVATE_KEY` del Environment activo (texto plano PEM, sin Base64 — los secrets de GitHub Actions ya soportan multilínea nativamente) a un archivo temporal dentro del workspace del job, con permisos `600`.
 2. Exporta `DOCKER_HOST=ssh://<usuario>@<host>` (usuario/host del VPS de ese entorno, también como secret o variable del Environment) y `GIT_SSH_COMMAND`/`SSH_AUTH_SOCK` según corresponda para que `ssh`/`docker` usen esa clave sin prompt interactivo.
 3. Sintetiza `.env.<entorno>` en el workspace del job a partir de los demás secrets del Environment (credenciales de Kestra, Superset, Nango que hoy vivían en el `.env.<entorno>` del VPS).
 4. Invoca `pnpm deploy:vps -- <entorno>` sin cambios respecto al uso manual de hoy.

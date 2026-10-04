@@ -54,7 +54,7 @@ y `.github/workflows/migraciones-cloud.yml`.
 Ver `specs/20261003-105444-cicd-staging-produccion/contracts/cli-deploy-vps-ci.md`
 y `.github/workflows/deploy-infraestructura-vps.yml`.
 
-- Secrets por Environment: `VPS_SSH_PRIVATE_KEY` (Base64), `VPS_SSH_USER`,
+- Secrets por Environment: `VPS_SSH_PRIVATE_KEY` (texto plano PEM, sin Base64), `VPS_SSH_USER`,
   `VPS_SSH_HOST`, y `VPS_DEPLOY_ENV` (el bloque completo de variables que
   hoy viven en `.env.<entorno>` del VPS — Kestra, Superset, Nango — que el
   workflow sintetiza como archivo transitorio en el workspace del job).

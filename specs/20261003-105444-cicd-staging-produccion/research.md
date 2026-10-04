@@ -10,6 +10,7 @@ Este research resuelve, a nivel técnico, las dos preguntas que el assessment de
 - **Rationale**: Reutiliza exactamente el patrón de acceso que ya usa el repo para despacho remoto — `docs/deployment.md` documenta una clave SSH privada en Base64 (`SECRET_ORQUESTACION_SSH_PRIVATE_KEY`, spec 014) para que Kestra despache workers a servidores de organización por SSH. El mismo mecanismo (clave privada como secret, decodificada a un archivo temporal al iniciar el job) resuelve la conectividad del runner sin exigir que el runner migre de máquina ni que se abra ningún puerto nuevo del VPS más allá del SSH que ya usa el operador para la copia manual de hoy.
 - **Alternatives considered**: (a) Migrar el runner self-hosted para que corra físicamente en el VPS — descartado: acopla el CI a la disponibilidad del VPS y contradice que hoy el runner es compartido entre varios productos derivados en la máquina de desarrollo (`docs/deployment.md`, sección de réplicas). (b) Abrir la API de Docker por TCP con TLS en el VPS — descartado: mayor superficie de ataque que SSH, y el VPS ya tiene `sshd` configurado (`docs/deployment.md`, "Servidores de organización").
 - **Resuelve**: la pregunta abierta de `spec.md` sobre conectividad — no requiere aprovisionar nada nuevo en el VPS (ya tiene `sshd`); sólo requiere agregar el cliente SSH a la imagen del runner (`infra/runner/Dockerfile` no lo instala hoy) y una clave SSH por entorno como secret.
+- **Corrección (T025, validación real)**: a diferencia de `SECRET_ORQUESTACION_SSH_PRIVATE_KEY` (spec 014), `VPS_SSH_PRIVATE_KEY` se guarda como texto plano PEM, **sin** Base64 — los secrets de GitHub Actions ya soportan multilínea nativamente, y el intento original de `base64 -d` falló contra la clave real con `base64: invalid input` (el secret configurado era el PEM crudo, no una versión codificada). Se corrigió el workflow para escribir el secret directo al archivo en vez de decodificarlo.
 
 ## 2. Credenciales del deploy de infraestructura sin archivo `.env` en el VPS
 
@@ -61,7 +62,7 @@ Este research resuelve, a nivel técnico, las dos preguntas que el assessment de
 | Secret | Usado por | Reemplaza |
 |---|---|---|
 | `SUPABASE_DB_URL` | `scripts/migrar-supabase-cloud.mjs` | Aplicación manual de migraciones |
-| `VPS_SSH_PRIVATE_KEY` (Base64) | workflow de deploy de infraestructura (`DOCKER_HOST=ssh://...`) | Acceso SSH manual del operador |
+| `VPS_SSH_PRIVATE_KEY` (texto plano PEM) | workflow de deploy de infraestructura (`DOCKER_HOST=ssh://...`) | Acceso SSH manual del operador |
 | `VPS_DEPLOY_ENV` (bloque de variables, sintetizado a `.env.<entorno>` transitorio) | `scripts/deploy-vps.mjs` | `.env.<entorno>` persistente en el VPS |
 | `KESTRA_BASIC_AUTH_USERNAME` / `KESTRA_BASIC_AUTH_PASSWORD` | `infra/kestra/desplegar-flow.mjs` | Variables de entorno locales del operador |
 | `SUPERSET_URL` / `SUPERSET_USERNAME` / `SUPERSET_PASSWORD` | `infra/superset/importar-dashboards.mjs` | N/A (mecanismo nuevo) |
