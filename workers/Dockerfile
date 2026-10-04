@@ -17,7 +17,7 @@ RUN pnpm --filter "@workers/${WORKER}" deploy --prod --legacy /runtime
 FROM ${NODE_IMAGE} AS runtime
 ARG WORKER
 ARG SOURCE_COMMIT=unknown
-ARG REPO_URL=https://github.com/Agenmatica/automation-platform-template
+ARG REPO_URL=https://github.com/nicolasjones/automation-platform-template
 
 RUN addgroup -S worker && adduser -S worker -G worker
 WORKDIR /app
