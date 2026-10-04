@@ -15,7 +15,7 @@ services:
           memory: ${RUNNER_MEMORY_LIMIT:-3g}
     environment:
       GH_PAT: ${GH_RUNNER_PAT}
-      RUNNER_REPO: Agenmatica/automation-platform-template
+      RUNNER_REPO: nicolasjones/automation-platform-template
       RUNNER_NAME: automation-platform-template-docker
       RUNNER_LABELS: self-hosted,platform-local
       # Los steps de los jobs heredan este entorno. pnpm 11 lee pnpm_config_*
