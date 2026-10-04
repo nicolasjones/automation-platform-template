@@ -71,3 +71,17 @@ begin
     );
   end if;
 end $$;
+
+-- Completa el registro de busqueda-documental cuando la migración
+-- 20261005000000_rag_busqueda_documental.sql no pudo hacerlo (reset desde
+-- cero: migraciones corren antes que este seed, sin superadmin todavía).
+do $$
+begin
+  if not exists (select 1 from public.features where id = 'busqueda-documental') then
+    perform public.registrar_feature(
+      'busqueda-documental',
+      'Búsqueda documental (RAG)',
+      'Subir documentos propios de la organización y preguntarles en lenguaje natural, con respuestas que citan el documento de origen.'
+    );
+  end if;
+end $$;

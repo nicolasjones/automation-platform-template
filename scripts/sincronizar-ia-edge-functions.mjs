@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 // Deno (el runtime de las Edge Functions) no resuelve imports NodeNext con
 // extensión .js que en realidad apuntan a un .ts (packages/ia/src/*.ts usa
-// esa convención) ni specifiers de npm sin el prefijo "npm:". Esta copia
-// mecánica es el workaround: mismo contenido que packages/ia/src, con
-// .js -> .ts en los imports relativos y 'ajv' -> 'npm:ajv@8'. Correr este
-// script después de cualquier cambio en packages/ia/src/ que afecte a una
-// Edge Function consumidora y commitear el resultado junto con el cambio
-// de origen.
+// esa convención) ni specifiers de npm sin el prefijo "npm:". Tampoco
+// resuelve 'npm:@platform/ia' — es un paquete privado, nunca publicado a
+// npm real (bug encontrado en producto derivado, spec chat-ia-supabase).
+// Esta copia mecánica es el workaround: mismo contenido que packages/ia/src,
+// con .js -> .ts en los imports relativos y 'ajv' -> 'npm:ajv@8'. Correr
+// este script después de cualquier cambio en packages/ia/src/ que afecte a
+// una Edge Function consumidora y commitear el resultado junto con el
+// cambio de origen.
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'

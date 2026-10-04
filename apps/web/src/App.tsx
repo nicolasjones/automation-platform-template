@@ -53,6 +53,7 @@ import { IaCapacidadesMcp } from './pages/ia/capacidades-mcp'
 import { IaChat } from './pages/ia/chat'
 import { IaCapacidadesChat } from './pages/ia/capacidades-chat'
 import { ChatFlotante } from './components/ia/ChatFlotante'
+import { IaDocumentos } from './pages/ia/documentos'
 import './App.css'
 
 const theme = createTheme({
@@ -295,6 +296,7 @@ function App() {
                 <Route path="/ia/capacidades-mcp" element={<IaCapacidadesMcp />} />
                 <Route path="/ia/chat" element={<IaChat />} />
                 <Route path="/ia/capacidades-chat" element={<IaCapacidadesChat />} />
+                <Route path="/ia/documentos" element={<IaDocumentos />} />
               </Route>
 
               <Route
