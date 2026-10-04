@@ -40,7 +40,7 @@
     },
     {
       "id": "operable-refine-panel",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "title": "Kit operable y extensible del panel",
       "paths": ["apps/web/src/components/navegacion/", "apps/web/src/components/pagina/", "apps/web/src/components/estados/", "apps/web/src/components/identidad/", "apps/web/src/components/ia/", "apps/web/src/context/ContextoPanel.tsx", "supabase/migrations/20260922120000_contexto_panel_operativo.sql"]
     },
@@ -118,7 +118,7 @@
     },
     {
       "id": "chat-companion-mechanism",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "title": "Chat companion con acceso a funcionalidades registradas",
       "paths": ["supabase/migrations/20261005000000_chat_companion_mechanism.sql", "supabase/migrations/20261005000500_chat_companion_ejecucion.sql", "supabase/migrations/20261005001000_chat_companion_capacidades_rpc.sql", "supabase/functions/chat-ia-responder/index.ts", "supabase/functions/_shared/ia/", "scripts/sincronizar-ia-edge-functions.mjs", "scripts/sincronizar-ia-edge-functions.test.mjs", "apps/web/src/components/ia/ChatFlotante.tsx", "apps/web/src/components/ia/ChatIAPanel.tsx", "apps/web/src/components/ia/MensajeChatIA.tsx", "apps/web/src/pages/ia/chat.tsx", "apps/web/src/pages/ia/capacidades-chat.tsx"]
     },
