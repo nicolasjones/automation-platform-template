@@ -55,9 +55,31 @@ Ver `specs/20261003-105444-cicd-staging-produccion/contracts/cli-deploy-vps-ci.m
 y `.github/workflows/deploy-infraestructura-vps.yml`.
 
 - Secrets por Environment: `VPS_SSH_PRIVATE_KEY` (texto plano PEM, sin Base64), `VPS_SSH_USER`,
-  `VPS_SSH_HOST`, y `VPS_DEPLOY_ENV` (el bloque completo de variables que
-  hoy viven en `.env.<entorno>` del VPS — Kestra, Superset, Nango — que el
-  workflow sintetiza como archivo transitorio en el workspace del job).
+  `VPS_SSH_HOST`, y `VPS_DEPLOY_ENV`.
+- **`VPS_DEPLOY_ENV` NO es el nombre del entorno** (`staging`/`production`) —
+  eso ya está hardcodeado en el workflow. Es el **contenido completo** de lo
+  que hoy es el archivo `.env.<entorno>` en el filesystem del VPS: todas las
+  variables que `infra/kestra/compose.yaml`, `infra/superset/compose.yaml`,
+  `infra/nango/compose.yaml` y `infra/playwright/compose.yaml` necesitan,
+  una por línea en formato `CLAVE=valor` (dotenv), con valores reales de
+  ese entorno — nunca los defaults de `.env.example`, que son solo para
+  desarrollo local. El workflow valida que tenga al menos 15 líneas
+  `CLAVE=valor` antes de usarlo, y falla con un mensaje claro si no (para no
+  confundir "faltan variables" con un error de Docker). Variables
+  requeridas (ver `.env.example` para la descripción de cada una):
+
+  | Grupo | Variables |
+  |---|---|
+  | Kestra | `KESTRA_PORT`, `KESTRA_BASIC_AUTH_USERNAME`, `KESTRA_BASIC_AUTH_PASSWORD`, `KESTRA_DB_PASSWORD`, `KESTRA_PUBLIC_URL`, `KESTRA_ORQUESTACION_DB_URL`, `KESTRA_ORQUESTACION_DB_PASSWORD`, `KESTRA_ORQUESTACION_CONCURRENCIA`, `KESTRA_BACKUPS_DB_URL`, `KESTRA_BACKUPS_PGDUMP_URL`, `KESTRA_BACKUPS_DB_PASSWORD`, `KESTRA_ALERTAS_WEBHOOK_URL`, `SECRET_ORQUESTACION_SSH_PRIVATE_KEY`, `EVIDENCIA_DIR_HOST`, `EVIDENCIA_RETENCION_DIAS`, `EVIDENCIA_VISUAL` |
+  | Superset | `SUPERSET_PORT`, `SUPERSET_ADMIN_USERNAME`, `SUPERSET_ADMIN_PASSWORD`, `SUPERSET_ADMIN_EMAIL`, `SUPERSET_DB_PASSWORD`, `SUPERSET_SECRET_KEY`, `SUPERSET_GUEST_TOKEN_USERNAME`, `SUPERSET_GUEST_TOKEN_PASSWORD`, `SUPERSET_GUEST_TOKEN_JWT_SECRET`, `REFINE_ORIGIN`, `SUPABASE_DOCKER_NETWORK`, `WEB_PORT` |
+  | Nango | `NANGO_PORT`, `NANGO_DASHBOARD_USERNAME`, `NANGO_DASHBOARD_PASSWORD`, `NANGO_DB_PASSWORD`, `NANGO_ENCRYPTION_KEY`, `NANGO_SERVER_URL`, `NANGO_PUBLIC_SERVER_URL`, `NANGO_SECRET_KEY_DEV` |
+  | Playwright | `PLAYWRIGHT_PORT` |
+
+  `KESTRA_ORQUESTACION_DB_URL`/`KESTRA_BACKUPS_DB_URL`/`KESTRA_BACKUPS_PGDUMP_URL`
+  en particular **no** deben apuntar a `host.docker.internal` (eso es solo
+  para desarrollo local) — deben apuntar a la conexión real del proyecto
+  Supabase cloud de ese entorno. `REFINE_ORIGIN`/`KESTRA_PUBLIC_URL`/`NANGO_SERVER_URL`
+  deben ser los dominios HTTPS reales del entorno, no `localhost`.
 - El runner self-hosted necesita `openssh-client` instalado
   (`infra/runner/Dockerfile`).
 - `staging` dispara en `push` a los `paths` listados en el contrato de gate.
