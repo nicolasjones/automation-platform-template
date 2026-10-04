@@ -323,9 +323,21 @@ con o sin el separador `--` (pnpm 11.19.0 y 12.3.4 confirmados reenviándolo
 literal al script en vez de eliminarlo, a diferencia de la convención
 documentada de npm/pnpm run) — hallazgo real de la validación end-to-end de
 `20261003-105444-cicd-staging-produccion`. También fija `--project-directory
-infra/<producto>` al invocar `docker compose` por producto, para que las
-rutas relativas de cada `compose.yaml` (p. ej. `./superset_config.py` en
-Superset) resuelvan igual sin importar la versión de Docker Compose
-instalada — otro hallazgo real de esa misma validación (Compose más viejo
-del runner self-hosted resolvía esa ruta distinto que uno más nuevo,
-causando que Docker creara un directorio vacío donde esperaba un archivo).
+infra/<producto>` al invocar `docker compose` por producto (buena práctica
+defensiva, aunque no fue la causa real de lo siguiente).
+
+**Bind mounts relativos no funcionan con `DOCKER_HOST=ssh` remoto.**
+`scripts/deploy-vps.mjs` controla el Docker del VPS desde el runner de CI
+vía `DOCKER_HOST=ssh://...` — el cliente local solo envía al daemon remoto
+la ruta ya resuelta de cualquier bind mount; el daemon la usa contra SU
+PROPIO filesystem. Un bind mount con ruta relativa (`./superset_config.py`
+en `infra/superset/compose.yaml`) resuelve, del lado del cliente, a una
+ruta que existe en el checkout del runner pero no en el VPS — Docker crea
+ahí un directorio vacío en vez de fallar, y el contenedor arranca con
+`IsADirectoryError`. El `build` de una imagen no tiene este problema (el
+contexto se transmite completo al daemon remoto). Por eso
+`infra/superset/Dockerfile` ahora hornea (`COPY`) sus tres archivos de
+configuración en vez de bind-montearlos — cualquier producto futuro que
+agregue un bind mount relativo a su `compose.yaml` necesita el mismo
+patrón, no bind-mount. Detalle completo y alternativas descartadas en
+`specs/20261003-105444-cicd-staging-produccion/research.md` §2.

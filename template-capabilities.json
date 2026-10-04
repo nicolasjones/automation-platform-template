@@ -76,9 +76,9 @@
     },
     {
       "id": "embedded-analytics-runtime",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "title": "Analítica embebida de Superset reproducible al recrear contenedores",
-      "paths": ["infra/superset/compose.yaml", "infra/superset/compose.vps.yaml", "infra/superset/configurar_embebido.py", "supabase/functions/emitir-acceso-reporte/index.ts", "scripts/verificar-superset-embebido.mjs"]
+      "paths": ["infra/superset/compose.yaml", "infra/superset/compose.vps.yaml", "infra/superset/configurar_embebido.py", "infra/superset/Dockerfile", "supabase/functions/emitir-acceso-reporte/index.ts", "scripts/verificar-superset-embebido.mjs"]
     },
     {
       "id": "isolated-ci-database",

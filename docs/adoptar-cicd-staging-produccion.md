@@ -54,6 +54,14 @@ y `.github/workflows/migraciones-cloud.yml`.
 Ver `specs/20261003-105444-cicd-staging-produccion/contracts/cli-deploy-vps-ci.md`
 y `.github/workflows/deploy-infraestructura-vps.yml`.
 
+**Importante para cualquier servicio nuevo que agregues a `infra/<producto>/compose.yaml`**:
+`DOCKER_HOST=ssh` remoto significa que un bind mount con ruta relativa
+(`./archivo:/destino`) nunca va a funcionar — el daemon del VPS no tiene el
+checkout del runner de CI en su filesystem. Si tu servicio necesita un
+archivo propio dentro del contenedor, horneálo en la imagen (`COPY` en el
+`Dockerfile` del producto), como ya hace `infra/superset/Dockerfile`. Ver
+`research.md` §2 de esta spec para el detalle completo.
+
 - Secrets por Environment: `VPS_SSH_PRIVATE_KEY` (texto plano PEM, sin Base64), `VPS_SSH_USER`,
   `VPS_SSH_HOST`, y `VPS_DEPLOY_ENV`.
 - **`VPS_DEPLOY_ENV` NO es el nombre del entorno** (`staging`/`production`) —
