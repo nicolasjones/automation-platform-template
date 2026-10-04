@@ -50,6 +50,9 @@ import { IaContratos } from './pages/ia/contratos'
 import { IaPoliticas } from './pages/ia/politicas'
 import { IaInteracciones } from './pages/ia/interacciones'
 import { IaCapacidadesMcp } from './pages/ia/capacidades-mcp'
+import { IaChat } from './pages/ia/chat'
+import { IaCapacidadesChat } from './pages/ia/capacidades-chat'
+import { ChatFlotante } from './components/ia/ChatFlotante'
 import './App.css'
 
 const theme = createTheme({
@@ -219,6 +222,7 @@ function App() {
                   <Authenticated key="protegido" fallback={<CatchAllNavigate to="/login" />}>
                     <ThemedLayout Sider={SiderPanel} Header={EncabezadoPanel}>
                       <Outlet />
+                      <ChatFlotante />
                     </ThemedLayout>
                   </Authenticated>
                 }
@@ -289,6 +293,8 @@ function App() {
                 <Route path="/ia/politicas" element={<IaPoliticas />} />
                 <Route path="/ia/interacciones" element={<IaInteracciones />} />
                 <Route path="/ia/capacidades-mcp" element={<IaCapacidadesMcp />} />
+                <Route path="/ia/chat" element={<IaChat />} />
+                <Route path="/ia/capacidades-chat" element={<IaCapacidadesChat />} />
               </Route>
 
               <Route
