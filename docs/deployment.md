@@ -322,4 +322,10 @@ Superset como proyectos Docker separados (`platform-<entorno>-kestra` y
 con o sin el separador `--` (pnpm 11.19.0 y 12.3.4 confirmados reenviándolo
 literal al script en vez de eliminarlo, a diferencia de la convención
 documentada de npm/pnpm run) — hallazgo real de la validación end-to-end de
-`20261003-105444-cicd-staging-produccion`.
+`20261003-105444-cicd-staging-produccion`. También fija `--project-directory
+infra/<producto>` al invocar `docker compose` por producto, para que las
+rutas relativas de cada `compose.yaml` (p. ej. `./superset_config.py` en
+Superset) resuelvan igual sin importar la versión de Docker Compose
+instalada — otro hallazgo real de esa misma validación (Compose más viejo
+del runner self-hosted resolvía esa ruta distinto que uno más nuevo,
+causando que Docker creara un directorio vacío donde esperaba un archivo).

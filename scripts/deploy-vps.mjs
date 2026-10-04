@@ -16,9 +16,18 @@ const envFile = path.join(root, `.env.${environment}`);
 try { await access(envFile); } catch { throw new Error(`No existe .env.${environment} en el VPS.`); }
 
 for (const product of ['kestra', 'superset', 'playwright', 'nango']) {
+  const productDir = path.join(root, 'infra', product);
   const composeBase = `infra/${product}/compose.yaml`;
   const composeVps = `infra/${product}/compose.vps.yaml`;
-  const args = ['compose', '--project-name', `platform-${environment}-${product}`, '--env-file', envFile, '-f', composeBase, '-f', composeVps];
+  // --project-directory fija explícitamente dónde resuelven las rutas
+  // relativas dentro de cada compose.yaml (p. ej. "./superset_config.py").
+  // Sin esto, qué directorio ancla esas rutas depende de la versión de
+  // Docker Compose (algunas usan el directorio del primer -f, otras el cwd
+  // del proceso) — distinto entre Compose v5.4.0 (local) y la versión del
+  // runner self-hosted causó un IsADirectoryError real en superset-init
+  // (Docker crea un directorio vacío cuando el bind mount apunta a un
+  // archivo que no existe en la ruta resuelta). Detectado en T025.
+  const args = ['compose', '--project-name', `platform-${environment}-${product}`, '--project-directory', productDir, '--env-file', envFile, '-f', composeBase, '-f', composeVps];
   await run('docker', [...args, 'config', '--quiet'], { cwd: root });
   // --ignore-buildable salta los servicios con build: (p. ej. superset-init) que no
   // tienen de dónde bajarse; build los compila a partir de su Dockerfile. Separado
