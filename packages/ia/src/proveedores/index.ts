@@ -38,10 +38,15 @@ function normalizar(adaptador: AdaptadorProveedor, cuerpo: unknown): ModeloDescu
   })
 }
 
+// Content-Type explícito en los tres casos: descubrirModelos (GET, sin
+// body) nunca lo necesitó y el gap pasó desapercibido hasta que
+// invocarProveedorIa (POST con body JSON) lo probó en vivo por primera vez
+// — sin este header, OpenAI responde 400 "you must provide a model
+// parameter" aunque el body sí lo traiga, porque nunca lo parsea como JSON.
 function encabezados(adaptador: AdaptadorProveedor, clave: string): Record<string, string> {
-  if (adaptador === 'anthropic') return { 'x-api-key': clave, 'anthropic-version': '2023-06-01' }
-  if (adaptador === 'gemini') return { 'x-goog-api-key': clave }
-  return { Authorization: `Bearer ${clave}` }
+  if (adaptador === 'anthropic') return { 'x-api-key': clave, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' }
+  if (adaptador === 'gemini') return { 'x-goog-api-key': clave, 'Content-Type': 'application/json' }
+  return { Authorization: `Bearer ${clave}`, 'Content-Type': 'application/json' }
 }
 
 export async function descubrirModelos(

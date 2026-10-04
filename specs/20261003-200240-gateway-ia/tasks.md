@@ -12,7 +12,7 @@ description: "Task list template for feature implementation"
 ### Tests ⚠️
 
 - [x] T001 [P] [US1] Test "endpointInvocacion produce la URL correcta para openai/openai-compatible/anthropic/gemini, y lanza PROVEEDOR_IA_SIN_ENDPOINT_INVOCACION para baidu" en `packages/ia/src/proveedores/catalogo.test.ts` (nuevo). Desvío real encontrado escribiendo el test: la firma original tomaba solo `adaptador`, pero `openai-compatible` agrupa hosts distintos (x.ai, DeepSeek, etc.) — se corrigió a recibir el `ProveedorCatalogo` completo, ver research.md.
-- [x] T002 [P] [US1] Test "invocarProveedorIa arma método POST, URL y headers correctos por adaptador (anthropic: x-api-key+anthropic-version; gemini: x-goog-api-key, modelo en el path; resto: Authorization Bearer)" en `packages/ia/src/proveedores/index.test.ts` (nuevo).
+- [x] T002 [P] [US1] Test "invocarProveedorIa arma método POST, URL y headers correctos por adaptador (anthropic: x-api-key+anthropic-version; gemini: x-goog-api-key, modelo en el path; resto: Authorization Bearer)" en `packages/ia/src/proveedores/index.test.ts` (nuevo). Bug real encontrado en el primer consumidor real (ver commit 74dafd3): faltaba `Content-Type: application/json` en los tres adaptadores — nunca se manifestó porque el único consumidor hasta entonces (`descubrirModelos`) es un GET sin body.
 - [x] T003 [P] [US1] Test "respuesta no exitosa lanza INVOCACION_PROVEEDOR_IA_FALLO_<status>" en el mismo archivo.
 - [x] T004 [P] [US1] Test "respuesta exitosa devuelve el json() crudo sin transformar" en el mismo archivo.
 

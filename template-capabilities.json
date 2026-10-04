@@ -46,7 +46,7 @@
     },
     {
       "id": "governed-ai-core",
-      "version": "1.7.0",
+      "version": "1.8.0",
       "title": "Capacidad de IA gobernada",
       "paths": ["packages/ia/", "supabase/migrations/20261003183000_esperando_aprobacion_ia.sql", "supabase/tests/database/capacidad_ia_gobernada.test.sql"]
     },

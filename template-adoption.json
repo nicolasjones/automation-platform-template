@@ -7,7 +7,7 @@
     "durable-execution-outbox": { "version": "1.0.0", "status": "adopted" },
     "worker-image-security": { "version": "1.0.3", "status": "adopted", "evidence": "1.0.3 (2026-10-03): REPO_URL por defecto en workers/Dockerfile corregido a nicolasjones/automation-platform-template." },
     "operable-refine-panel": { "version": "1.2.0", "status": "adopted" },
-    "governed-ai-core": { "version": "1.7.0", "status": "adopted" },
+    "governed-ai-core": { "version": "1.8.0", "status": "adopted" },
     "ai-navigation-fallback": { "version": "1.0.0", "status": "adopted" },
     "portable-typescript-tooling": { "version": "1.2.4", "status": "adopted" },
     "safe-kestra-flow-publication": { "version": "1.1.0", "status": "adopted" },
