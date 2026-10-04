@@ -22,6 +22,7 @@
     "mapeo-identificadores-externos": { "version": "1.0.0", "status": "adopted" },
     "oauth-connections-nango": { "version": "1.0.0", "status": "adopted" },
     "mcp-server-mechanism": { "version": "1.0.0", "status": "adopted" },
-    "chat-companion-mechanism": { "version": "1.0.0", "status": "adopted" }
+    "chat-companion-mechanism": { "version": "1.0.0", "status": "adopted" },
+    "document-rag-mechanism": { "version": "1.0.0", "status": "adopted" }
   }
 }
