@@ -18,7 +18,7 @@ describe('invocarProveedorIa', () => {
 
     expect(fetchInvocacion).toHaveBeenCalledWith('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'x-api-key': 'clave-fixture', 'anthropic-version': '2023-06-01' },
+      headers: { 'x-api-key': 'clave-fixture', 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
       body: JSON.stringify({ mensaje: 'hola' }),
     })
   })
@@ -29,7 +29,7 @@ describe('invocarProveedorIa', () => {
 
     expect(fetchInvocacion).toHaveBeenCalledWith(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-fixture:generateContent',
-      { method: 'POST', headers: { 'x-goog-api-key': 'clave-fixture' }, body: JSON.stringify({ contents: [] }) },
+      { method: 'POST', headers: { 'x-goog-api-key': 'clave-fixture', 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [] }) },
     )
   })
 
@@ -39,7 +39,7 @@ describe('invocarProveedorIa', () => {
 
     expect(fetchInvocacion).toHaveBeenCalledWith('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      headers: { Authorization: 'Bearer clave-fixture' },
+      headers: { Authorization: 'Bearer clave-fixture', 'Content-Type': 'application/json' },
       body: JSON.stringify({ mensajes: [] }),
     })
   })
