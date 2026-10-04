@@ -75,8 +75,19 @@ end $$;
 -- Completa el registro de busqueda-documental cuando la migración
 -- 20261005000000_rag_busqueda_documental.sql no pudo hacerlo (reset desde
 -- cero: migraciones corren antes que este seed, sin superadmin todavía).
+-- registrar_feature exige impersonar un superadmin real (private.is_superadmin()
+-- lee request.jwt.claims) — sin este set_config falla con "Solo un superadmin
+-- puede registrar funcionalidades" aunque el caller sea postgres.
 do $$
+declare
+  v_actor uuid;
 begin
+  select user_id into v_actor from public.superadmins order by user_id limit 1;
+  if v_actor is null then
+    return;
+  end if;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_actor)::text, true);
+
   if not exists (select 1 from public.features where id = 'busqueda-documental') then
     perform public.registrar_feature(
       'busqueda-documental',
