@@ -58,7 +58,7 @@
     },
     {
       "id": "portable-typescript-tooling",
-      "version": "1.2.3",
+      "version": "1.2.4",
       "title": "Tooling operativo portable en Node ESM",
       "paths": ["infra/kestra/renderizar-flow.mjs", "infra/ia/", "scripts/deploy-vps.mjs", "scripts/deploy-vps.test.mjs", "scripts/reset-db-ci.mjs", "infra/runner/entrypoint.mjs"]
     },

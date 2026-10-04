@@ -9,7 +9,7 @@
     "operable-refine-panel": { "version": "1.2.0", "status": "adopted" },
     "governed-ai-core": { "version": "1.7.0", "status": "adopted" },
     "ai-navigation-fallback": { "version": "1.0.0", "status": "adopted" },
-    "portable-typescript-tooling": { "version": "1.2.3", "status": "adopted" },
+    "portable-typescript-tooling": { "version": "1.2.4", "status": "adopted" },
     "safe-kestra-flow-publication": { "version": "1.1.0", "status": "adopted" },
     "cloud-migrations-gate": { "version": "1.1.1", "status": "adopted" },
     "vps-deploy-gate": { "version": "1.0.4", "status": "adopted" },

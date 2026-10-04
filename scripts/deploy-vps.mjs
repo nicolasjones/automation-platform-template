@@ -1,7 +1,50 @@
 import { access } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { run } from './operaciones.mjs';
+import { redactError, run } from './operaciones.mjs';
+
+// `up` necesita su propia variante de run(): run() en modo no silencioso
+// usa stdio 'inherit' (el progreso de Compose queda visible en el log, pero
+// Node nunca ve el texto, así que un error no puede inspeccionarse); en
+// modo quiet descarta stdout por completo. Acá se necesitan las dos cosas
+// a la vez: ver el progreso en vivo Y poder inspeccionar el error para
+// decidir si reintentar.
+function dockerComposeUp(args, options) {
+  return new Promise((resolve, reject) => {
+    const child = spawn('docker', [...args, 'up', '-d', '--remove-orphans'], {
+      cwd: options.cwd,
+      stdio: ['ignore', 'inherit', 'pipe'],
+      windowsHide: true,
+    });
+    let stderr = '';
+    child.stderr.on('data', (chunk) => { process.stderr.write(chunk); stderr += chunk; });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(stderr || `docker terminó con código ${code}`));
+    });
+  });
+}
+
+// Condición de carrera real de Docker Compose (T025, contra producción
+// real): servicios sin `depends_on` entre sí (p. ej. nango-db y
+// nango-redis) se crean en paralelo; a veces Compose reporta
+// "Conflict. The container name ... is already in use" contra un
+// contenedor del MISMO `up`, recién creado por esa misma corrida (mismo
+// timestamp, mismas labels del mismo proyecto — no un recurso ajeno
+// preexistente). Un segundo intento encuentra el contenedor ya creado y
+// lo reconcilia en vez de competir de nuevo por crearlo.
+async function upConReintento(args, options) {
+  try {
+    await dockerComposeUp(args, options);
+  } catch (error) {
+    const mensaje = redactError(error);
+    if (!/already in use|Conflict\. The container name/i.test(mensaje)) throw new Error(mensaje);
+    console.warn(`Conflicto transitorio de nombre de contenedor, reintentando "docker compose up": ${mensaje}`);
+    await dockerComposeUp(args, options);
+  }
+}
 
 // pnpm (confirmado en 11.19.0 y 12.3.4) no elimina el separador "--" al
 // reenviar argumentos a un script ("pnpm deploy:vps -- staging" invoca
@@ -43,6 +86,6 @@ for (const product of ['kestra', 'superset', 'nango']) {
   // de up --build (como usa dev:superset) para que el log distinga cuál paso falló.
   await run('docker', [...args, 'pull', '--ignore-buildable'], { cwd: root });
   await run('docker', [...args, 'build'], { cwd: root });
-  await run('docker', [...args, 'up', '-d', '--remove-orphans'], { cwd: root });
+  await upConReintento(args, { cwd: root });
   await run('docker', [...args, 'ps'], { cwd: root });
 }
