@@ -22,3 +22,10 @@ onlyBuiltDependencies:
 peerDependencyRules:
   allowedVersions:
     "@mui/material": "6"
+
+# packages/mcp-server trae vitest (vía esbuild) por primera vez a este
+# repo — sin esto, pnpm install --frozen-lockfile falla en un entorno
+# limpio (CI, clon nuevo) con ERR_PNPM_IGNORED_BUILDS. Mismo bug real
+# encontrado en el producto derivado al adoptar este mecanismo.
+allowBuilds:
+  esbuild: true
