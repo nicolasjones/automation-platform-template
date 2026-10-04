@@ -34,7 +34,7 @@
     },
     {
       "id": "worker-image-security",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "title": "Construcción y runtime seguro de workers",
       "paths": ["workers/Dockerfile", "workers/CONTRATO.md", "workers/egress-allowlists.json", ".github/workflows/worker-images.yml", "scripts/smoke-imagenes-workers.mjs", "scripts/validar-egress-workers.mjs"]
     },
@@ -88,7 +88,7 @@
     },
     {
       "id": "local-ci-runners",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "title": "Runners self-hosted locales con store de pnpm compartido y topes",
       "paths": ["infra/runner/compose.yaml"]
     },
