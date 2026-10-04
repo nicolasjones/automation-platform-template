@@ -55,3 +55,10 @@ test('no confunde un DROP dentro de un comentario (instrucción de reversión) c
     assert.equal(result.code, 0);
   });
 });
+
+test('no confunde ALTER TABLE ... DROP CONSTRAINT con una migración destructiva (regresión real, ver 20261003183000_esperando_aprobacion_ia.sql)', async () => {
+  await withMigrations({ '001.sql': "alter table demo drop constraint demo_check; alter table demo add constraint demo_check check (true);" }, async (dir) => {
+    const result = await run(dir);
+    assert.equal(result.code, 0, result.stderr);
+  });
+});
