@@ -1,0 +1,117 @@
+name: Deploy infraestructura VPS
+
+# CI de deploy de infraestructura del VPS (Kestra, Superset, proxy reverso)
+# con gate staging-producción (spec 20261003-105444-cicd-staging-produccion).
+# scripts/deploy-vps.mjs no cambia de código: el runner controla el Docker
+# remoto del VPS vía DOCKER_HOST=ssh://usuario@host (mismo patrón de clave
+# SSH que SECRET_ORQUESTACION_SSH_PRIVATE_KEY, spec 014) y el archivo
+# .env.<entorno> que el script sigue exigiendo se sintetiza en el workspace
+# efímero del job a partir del secret VPS_DEPLOY_ENV — nunca persiste en el
+# filesystem del VPS ni se commitea. Ver
+# specs/20261003-105444-cicd-staging-produccion/contracts/cli-deploy-vps-ci.md
+# y research.md §1-2. Todos los secrets se pasan por `env:`, nunca
+# interpolados directo en el texto de `run:` (evita que queden embebidos en
+# el comando ejecutado si el valor tuviera caracteres especiales).
+#
+# Gate: `staging` dispara solo en push (automático); `production` solo se
+# dispara manualmente desde la pestaña Actions ("Run workflow" →
+# workflow_dispatch) — alternativa sin costo a GitHub Environment +
+# required reviewers (plan de pago no disponible aquí). Decisión del
+# coordinador, ver tasks.md T027. Los Environments se conservan para
+# separar secrets por entorno; solo se cae la regla de required reviewers.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/kestra/compose*.yaml"
+      - "infra/superset/compose*.yaml"
+      - "infra/nango/compose*.yaml"
+      - "infra/playwright/compose*.yaml"
+      - "scripts/deploy-vps.mjs"
+      - ".github/workflows/deploy-infraestructura-vps.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  staging:
+    if: github.event_name == 'push'
+    runs-on: [self-hosted, platform-local]
+    environment: deploy-infraestructura-vps-staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - name: Iniciar ssh-agent con la clave del VPS de staging
+        env:
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_SSH_HOST: ${{ secrets.VPS_SSH_HOST }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s' "$VPS_SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/vps_deploy_key
+          chmod 600 ~/.ssh/vps_deploy_key
+          ssh-keyscan -H "$VPS_SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          eval "$(ssh-agent -s)"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+          ssh-add ~/.ssh/vps_deploy_key
+      - name: Sintetizar .env.staging desde secrets
+        env:
+          VPS_DEPLOY_ENV: ${{ secrets.VPS_DEPLOY_ENV }}
+        run: printf '%s' "$VPS_DEPLOY_ENV" > .env.staging
+      - run: pnpm deploy:vps -- staging
+        env:
+          DOCKER_HOST: ssh://${{ secrets.VPS_SSH_USER }}@${{ secrets.VPS_SSH_HOST }}
+      - name: Limpiar credenciales transitorias
+        if: always()
+        run: |
+          rm -f .env.staging ~/.ssh/vps_deploy_key
+          ssh-agent -k || true
+
+  production:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: [self-hosted, platform-local]
+    environment: deploy-infraestructura-vps-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - name: Iniciar ssh-agent con la clave del VPS de producción
+        env:
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_SSH_HOST: ${{ secrets.VPS_SSH_HOST }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s' "$VPS_SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/vps_deploy_key
+          chmod 600 ~/.ssh/vps_deploy_key
+          ssh-keyscan -H "$VPS_SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          eval "$(ssh-agent -s)"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+          ssh-add ~/.ssh/vps_deploy_key
+      - name: Sintetizar .env.production desde secrets
+        env:
+          VPS_DEPLOY_ENV: ${{ secrets.VPS_DEPLOY_ENV }}
+        run: printf '%s' "$VPS_DEPLOY_ENV" > .env.production
+      - run: pnpm deploy:vps -- production
+        env:
+          DOCKER_HOST: ssh://${{ secrets.VPS_SSH_USER }}@${{ secrets.VPS_SSH_HOST }}
+      - name: Limpiar credenciales transitorias
+        if: always()
+        run: |
+          rm -f .env.production ~/.ssh/vps_deploy_key
+          ssh-agent -k || true

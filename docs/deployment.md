@@ -237,6 +237,72 @@ borraba en cada PR, también en los PR del producto que copió el workflow (ver
   `supabase stop --project-id ci-<repo> --no-backup`.
 - Adopción en productos derivados: `docs/adoptar-ci-base-aislada.md`.
 
+### Deploy de infraestructura del VPS (staging → producción)
+
+`.github/workflows/deploy-infraestructura-vps.yml` (spec
+`20261003-105444-cicd-staging-produccion`) corre `pnpm deploy:vps -- <entorno>`
+sin que nadie se conecte por SSH a mano. El job controla el Docker remoto
+del VPS con `DOCKER_HOST=ssh://usuario@host`, usando una clave SSH (secret
+`VPS_SSH_PRIVATE_KEY`, mismo patrón que `SECRET_ORQUESTACION_SSH_PRIVATE_KEY`
+de la spec 014) cargada en un `ssh-agent` efímero del job. El archivo
+`.env.<entorno>` que `scripts/deploy-vps.mjs` sigue exigiendo (sin cambios
+de código) se sintetiza en el workspace del job desde el secret
+`VPS_DEPLOY_ENV` — nunca vuelve a persistir en el filesystem del VPS. Mismo
+gate que el resto de esta spec: `staging` dispara en cada push relevante;
+`production` solo corre si alguien lo dispara a mano desde Actions
+(`workflow_dispatch`) — alternativa sin costo a required reviewers, que
+necesita un plan de pago no disponible aquí (ver tasks.md T027).
+`infra/runner/Dockerfile` agrega `openssh-client` para poder usar
+`DOCKER_HOST=ssh://...`. Detalle de diseño en
+`specs/20261003-105444-cicd-staging-produccion/research.md` §1-2 y
+`contracts/cli-deploy-vps-ci.md`.
+
+### Import de dashboards de Superset (mecanismo genérico, sin wiring automático)
+
+`infra/superset/importar-dashboards.mjs` (spec
+`20261003-105444-cicd-staging-produccion`) importa un paquete exportado de
+Superset (ZIP con el YAML del dashboard y sus datasets/bases) contra la
+instancia de Superset de un entorno, autenticando vía la API REST de
+Superset (login + CSRF token). Es invocación manual (`pnpm
+superset:importar-dashboards -- --source <paquete.zip> --entorno
+staging|production`) — no se dispara por ningún push mientras no exista
+ningún paquete de dashboard versionado en el repositorio, porque hoy ningún
+producto derivado exporta uno real. Ver
+`docs/adoptar-cicd-staging-produccion.md`.
+
+### Publicación de flows de Kestra (staging → producción)
+
+`.github/workflows/publicar-flows-kestra.yml` (spec
+`20261003-105444-cicd-staging-produccion`) publica todos los flows de
+`infra/kestra/flows/*.yml` contra el Kestra de cada entorno corriendo
+`infra/kestra/desplegar-flow.mjs` sin ningún cambio de código — ya aceptaba
+credenciales y URL por variable de entorno o flag. `id` y `namespace` se
+leen del propio YAML de cada flow. Mismo gate que el resto de esta spec:
+`staging` por push, `production` solo por `workflow_dispatch` manual.
+Secrets por Environment: `KESTRA_BASIC_AUTH_USERNAME`,
+`KESTRA_BASIC_AUTH_PASSWORD`, `KESTRA_PUBLIC_URL`.
+
+### Migraciones cloud (staging → producción)
+
+`.github/workflows/migraciones-cloud.yml` (spec
+`20261003-105444-cicd-staging-produccion`) aplica `supabase/migrations/**`
+contra el proyecto Supabase cloud de cada entorno con `scripts/migrar-supabase-cloud.mjs`
+(`supabase db push --db-url`). Ya no es un paso manual: push a `main` dispara
+el job `staging` automáticamente; el job `production` corre bajo el GitHub
+Environment `migraciones-cloud-production` solo cuando alguien lo dispara a
+mano desde la pestaña Actions (`workflow_dispatch`) — alternativa sin costo
+a required reviewers, que necesita un plan de pago no disponible aquí (ver
+tasks.md T027 de la spec).
+`SUPABASE_DB_URL` es un secret por Environment — una cadena de conexión
+acotada al proyecto, no un access token de cuenta. Antes de aplicar nada,
+`scripts/validar-migraciones-aditivas.mjs` rechaza cualquier migración
+destructiva (`DROP TABLE`/`COLUMN`, `TRUNCATE`) que no documente su
+Reversión — misma convención ya vigente en `supabase/migrations/` (un
+comentario de encabezado con la palabra "Reversión" y los pasos para
+deshacerla), ignora los `DROP` que ya viven comentados como esa
+instrucción. Detalle de diseño y alternativas descartadas en
+`specs/20261003-105444-cicd-staging-produccion/research.md`.
+
 ## Promoción simple
 
 ```text

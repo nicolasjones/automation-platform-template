@@ -1,0 +1,84 @@
+name: Publicar flows Kestra
+
+# CI de publicación de flows del orquestador con gate staging-producción
+# (spec 20261003-105444-cicd-staging-produccion). infra/kestra/desplegar-flow.mjs
+# no cambia de código: ya acepta credenciales y URL por variable de entorno
+# o flag. Publica todos los flows versionados en infra/kestra/flows/ (id y
+# namespace se leen del propio YAML) contra el Kestra del entorno
+# correspondiente. Ningún flow de este repo usa hoy un trigger Webhook con
+# clave literal (--webhook-key-env de desplegar-flow.mjs) — si uno la
+# necesitara en el futuro, este loop genérico no la resuelve por sí solo y
+# habría que agregar un caso especial para ese flow puntual.
+#
+# Gate: `staging` dispara solo en push (automático); `production` solo se
+# dispara manualmente desde la pestaña Actions ("Run workflow" →
+# workflow_dispatch) — alternativa sin costo a GitHub Environment +
+# required reviewers (plan de pago no disponible aquí). Decisión del
+# coordinador, ver tasks.md T027. Los Environments se conservan para
+# separar secrets por entorno; solo se cae la regla de required reviewers.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/kestra/flows/**"
+      - ".github/workflows/publicar-flows-kestra.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  staging:
+    if: github.event_name == 'push'
+    runs-on: [self-hosted, platform-local]
+    environment: publicar-flows-kestra-staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - name: Publicar flows contra el Kestra de staging
+        env:
+          KESTRA_BASIC_AUTH_USERNAME: ${{ secrets.KESTRA_BASIC_AUTH_USERNAME }}
+          KESTRA_BASIC_AUTH_PASSWORD: ${{ secrets.KESTRA_BASIC_AUTH_PASSWORD }}
+          KESTRA_URL: ${{ secrets.KESTRA_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          for file in infra/kestra/flows/*.yml; do
+            id=$(grep -m1 '^id:' "$file" | sed 's/^id: *//')
+            namespace=$(grep -m1 '^namespace:' "$file" | sed 's/^namespace: *//')
+            echo "Publicando $namespace/$id ($file)"
+            node infra/kestra/desplegar-flow.mjs --source "$file" --namespace "$namespace" --flow-id "$id" --kestra-url "$KESTRA_URL"
+          done
+
+  production:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: [self-hosted, platform-local]
+    environment: publicar-flows-kestra-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - name: Publicar flows contra el Kestra de producción
+        env:
+          KESTRA_BASIC_AUTH_USERNAME: ${{ secrets.KESTRA_BASIC_AUTH_USERNAME }}
+          KESTRA_BASIC_AUTH_PASSWORD: ${{ secrets.KESTRA_BASIC_AUTH_PASSWORD }}
+          KESTRA_URL: ${{ secrets.KESTRA_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          for file in infra/kestra/flows/*.yml; do
+            id=$(grep -m1 '^id:' "$file" | sed 's/^id: *//')
+            namespace=$(grep -m1 '^namespace:' "$file" | sed 's/^namespace: *//')
+            echo "Publicando $namespace/$id ($file)"
+            node infra/kestra/desplegar-flow.mjs --source "$file" --namespace "$namespace" --flow-id "$id" --kestra-url "$KESTRA_URL"
+          done

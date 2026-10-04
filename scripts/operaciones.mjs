@@ -8,7 +8,7 @@ export function requireEnvironment(name) {
 
 export function redactError(error) {
   const message = error instanceof Error ? error.message : String(error);
-  return [process.env.KESTRA_BASIC_AUTH_PASSWORD, process.env.KESTRA_WEBHOOK_KEY, process.env.IA_PROVEEDOR_CLAVE]
+  return [process.env.KESTRA_BASIC_AUTH_PASSWORD, process.env.KESTRA_WEBHOOK_KEY, process.env.IA_PROVEEDOR_CLAVE, process.env.SUPABASE_DB_URL, process.env.SUPERSET_PASSWORD]
     .filter((value) => typeof value === 'string' && value.length > 0)
     .reduce((redacted, value) => redacted.replaceAll(value, '[REDACTADO]'), message);
 }

@@ -3,6 +3,24 @@
   "template_repository": "Agenmatica/automation-platform-template",
   "capabilities": [
     {
+      "id": "cloud-migrations-gate",
+      "version": "1.1.0",
+      "title": "CI de migraciones de Supabase cloud con gate staging-producción",
+      "paths": ["scripts/migrar-supabase-cloud.mjs", "scripts/migrar-supabase-cloud.test.mjs", "scripts/validar-migraciones-aditivas.mjs", "scripts/validar-migraciones-aditivas.test.mjs", ".github/workflows/migraciones-cloud.yml"]
+    },
+    {
+      "id": "superset-dashboard-import",
+      "version": "1.0.0",
+      "title": "Mecanismo genérico de import de dashboards de Superset",
+      "paths": ["infra/superset/importar-dashboards.mjs", "infra/superset/importar-dashboards.test.mjs"]
+    },
+    {
+      "id": "vps-deploy-gate",
+      "version": "1.0.0",
+      "title": "CI de deploy de infraestructura del VPS con gate staging-producción",
+      "paths": [".github/workflows/deploy-infraestructura-vps.yml", "infra/runner/Dockerfile"]
+    },
+    {
       "id": "worker-execution-cycle",
       "version": "1.3.0",
       "title": "Ciclo auditable de ejecuciones de workers",
@@ -46,9 +64,9 @@
     },
     {
       "id": "safe-kestra-flow-publication",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "title": "Publicación segura de flows de Kestra",
-      "paths": ["infra/kestra/desplegar-flow.mjs", "infra/kestra/desplegar-flow.test.mjs"]
+      "paths": ["infra/kestra/desplegar-flow.mjs", "infra/kestra/desplegar-flow.test.mjs", ".github/workflows/publicar-flows-kestra.yml"]
     },
     {
       "id": "template-capability-sync",
