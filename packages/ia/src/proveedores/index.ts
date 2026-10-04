@@ -1,4 +1,5 @@
-import { proveedorDelCatalogo, type AdaptadorProveedor } from './catalogo.js'
+import type { PerfilModelo } from '../types.js'
+import { endpointInvocacion, proveedorDelCatalogo, type AdaptadorProveedor } from './catalogo.js'
 
 export type ModeloDescubierto = {
   modeloId: string
@@ -52,4 +53,26 @@ export async function descubrirModelos(
   const response = await fetchModelos(proveedor.endpointModelos, { headers: encabezados(proveedor.adaptador, clave) })
   if (!response.ok) throw new Error(`DESCUBRIMIENTO_MODELOS_IA_FALLO_${response.status}`)
   return normalizar(proveedor.adaptador, await response.json())
+}
+
+export type FetchInvocacion = (url: string, init: { method: 'POST'; headers: Record<string, string>; body: string }) => Promise<RespuestaHttp>
+
+// Transporte puro: no interpreta ni valida el cuerpo de la petición ni de la
+// respuesta — eso queda a cargo del consumidor, cada proveedor espera y
+// devuelve una forma distinta y packages/ia no se acopla a ninguna.
+export async function invocarProveedorIa(
+  perfil: PerfilModelo,
+  clave: string,
+  cuerpo: unknown,
+  fetchInvocacion: FetchInvocacion,
+): Promise<unknown> {
+  const proveedor = proveedorDelCatalogo(perfil.proveedorCodigo)
+  const url = endpointInvocacion(proveedor, perfil.modeloId)
+  const response = await fetchInvocacion(url, {
+    method: 'POST',
+    headers: encabezados(proveedor.adaptador, clave),
+    body: JSON.stringify(cuerpo),
+  })
+  if (!response.ok) throw new Error(`INVOCACION_PROVEEDOR_IA_FALLO_${response.status}`)
+  return response.json()
 }

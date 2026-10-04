@@ -40,15 +40,21 @@
     },
     {
       "id": "operable-refine-panel",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "title": "Kit operable y extensible del panel",
-      "paths": ["apps/web/src/components/navegacion/", "apps/web/src/components/pagina/", "apps/web/src/components/estados/", "apps/web/src/components/identidad/", "apps/web/src/context/ContextoPanel.tsx", "supabase/migrations/20260922120000_contexto_panel_operativo.sql"]
+      "paths": ["apps/web/src/components/navegacion/", "apps/web/src/components/pagina/", "apps/web/src/components/estados/", "apps/web/src/components/identidad/", "apps/web/src/components/ia/", "apps/web/src/context/ContextoPanel.tsx", "supabase/migrations/20260922120000_contexto_panel_operativo.sql"]
     },
     {
       "id": "governed-ai-core",
-      "version": "1.0.0",
+      "version": "1.7.0",
       "title": "Capacidad de IA gobernada",
-      "paths": ["packages/ia/"]
+      "paths": ["packages/ia/", "supabase/migrations/20261003183000_esperando_aprobacion_ia.sql", "supabase/tests/database/capacidad_ia_gobernada.test.sql"]
+    },
+    {
+      "id": "ai-navigation-fallback",
+      "version": "1.0.0",
+      "title": "Fallback de navegación asistido por IA",
+      "paths": ["packages/ia-navegacion/"]
     },
     {
       "id": "portable-typescript-tooling",

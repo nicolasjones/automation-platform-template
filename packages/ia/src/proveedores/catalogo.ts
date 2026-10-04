@@ -26,3 +26,15 @@ export function proveedorDelCatalogo(codigo: string): ProveedorCatalogo {
   if (!proveedor) throw new Error('PROVEEDOR_IA_NO_ADMITIDO')
   return proveedor
 }
+
+// El host sale de endpointModelos de cada proveedor (no de una constante por
+// adaptador): openai-compatible agrupa proveedores con hosts distintos entre
+// sí (x.ai, DeepSeek, Alibaba, Zhipu, Moonshot) — solo el patrón de ruta es
+// fijo por adaptador.
+export function endpointInvocacion(proveedor: ProveedorCatalogo, modeloId: string): string {
+  const base = proveedor.endpointModelos.replace(/\/models$/, '')
+  if (proveedor.adaptador === 'openai' || proveedor.adaptador === 'openai-compatible') return `${base}/chat/completions`
+  if (proveedor.adaptador === 'anthropic') return `${base}/messages`
+  if (proveedor.adaptador === 'gemini') return `${proveedor.endpointModelos}/${modeloId}:generateContent`
+  throw new Error('PROVEEDOR_IA_SIN_ENDPOINT_INVOCACION')
+}

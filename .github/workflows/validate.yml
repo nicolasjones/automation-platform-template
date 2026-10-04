@@ -28,6 +28,7 @@ jobs:
       - run: pnpm template:capabilities:check --base "origin/${{ github.base_ref || 'main' }}"
       - run: pnpm lint
       - run: pnpm build
+      - run: pnpm test:ia
       - run: pnpm test:web
 
   infrastructure:

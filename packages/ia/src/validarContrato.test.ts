@@ -16,4 +16,14 @@ describe('núcleo IA gobernada', () => {
     expect(() => validarPresupuesto(0, 2, new Date(Date.now() - 91_000), 90)).toThrow('LIMITE_TIEMPO_IA')
     expect(() => validarSalida('respuesta')).toThrow('RESPUESTA_IA_INVALIDA')
   })
+
+  it('valida la salida contra un esquemaSalida real cuando se lo pasa', () => {
+    const esquemaSalida = { type: 'object', required: ['resultado'], properties: { resultado: { type: 'string' } } }
+    expect(() => validarSalida({ resultado: 'ok' }, esquemaSalida)).not.toThrow()
+    expect(() => validarSalida({ otraCosa: 1 }, esquemaSalida)).toThrow('RESPUESTA_IA_FUERA_DE_ESQUEMA')
+  })
+
+  it('sin esquemaSalida, solo valida que sea un objeto (compatibilidad)', () => {
+    expect(() => validarSalida({ cualquiera: 'dato' })).not.toThrow()
+  })
 })

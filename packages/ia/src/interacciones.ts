@@ -25,7 +25,18 @@ export function registrarFallo(interaccion: InteraccionEnCurso, politica: Politi
   return transicionar(interaccion, 'revision_humana', { fallo })
 }
 
-export function completarInteraccion(interaccion: InteraccionEnCurso): InteraccionEnCurso {
+export function completarInteraccion(interaccion: InteraccionEnCurso, opciones: { requiereAprobacionHumana?: boolean } = {}): InteraccionEnCurso {
   if (interaccion.estado !== 'invocando') throw new Error('TRANSICION_IA_INVALIDA')
-  return transicionar(transicionar(interaccion, 'respuesta_validada'), 'completada')
+  const validada = transicionar(interaccion, 'respuesta_validada')
+  return transicionar(validada, opciones.requiereAprobacionHumana ? 'esperando_aprobacion' : 'completada')
+}
+
+export function aprobarInteraccion(interaccion: InteraccionEnCurso, detalle: Record<string, unknown> = {}): InteraccionEnCurso {
+  if (interaccion.estado !== 'esperando_aprobacion') throw new Error('TRANSICION_IA_INVALIDA')
+  return transicionar(interaccion, 'completada', detalle)
+}
+
+export function rechazarInteraccion(interaccion: InteraccionEnCurso, detalle: Record<string, unknown> = {}): InteraccionEnCurso {
+  if (interaccion.estado !== 'esperando_aprobacion') throw new Error('TRANSICION_IA_INVALIDA')
+  return transicionar(interaccion, 'rechazada', detalle)
 }

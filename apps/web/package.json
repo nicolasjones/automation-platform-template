@@ -16,6 +16,7 @@
     "@mui/icons-material": "^6.5.0",
     "@mui/material": "^6.5.0",
     "@nangohq/frontend": "^0.71.10",
+    "@platform/ia": "workspace:*",
     "@refinedev/core": "^5.0.12",
     "@refinedev/mui": "^8.0.2",
     "@refinedev/react-router": "^2.0.4",
