@@ -4,7 +4,7 @@
   "capabilities": [
     {
       "id": "cloud-migrations-gate",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "title": "CI de migraciones de Supabase cloud con gate staging-producción",
       "paths": ["scripts/migrar-supabase-cloud.mjs", "scripts/migrar-supabase-cloud.test.mjs", "scripts/validar-migraciones-aditivas.mjs", "scripts/validar-migraciones-aditivas.test.mjs", ".github/workflows/migraciones-cloud.yml"]
     },
