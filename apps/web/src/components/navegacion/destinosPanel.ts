@@ -48,6 +48,7 @@ export const SECCIONES_PANEL: SeccionPanel[] = [
       { id: 'clientes', etiqueta: 'Clientes', ruta: '/clientes', icono: BusinessCenterIcon, audiencia: 'organizacion' },
       { id: 'ejecuciones', etiqueta: 'Ejecuciones', ruta: '/ejecuciones', icono: HistoryIcon, audiencia: 'organizacion' },
       { id: 'analitica', etiqueta: 'Analítica', ruta: '/analitica', icono: BarChartIcon, audiencia: 'organizacion' },
+      { id: 'chat-ia', etiqueta: 'Chat', ruta: '/ia/chat', icono: SmartToyIcon, audiencia: 'organizacion' },
     ],
   },
   {
