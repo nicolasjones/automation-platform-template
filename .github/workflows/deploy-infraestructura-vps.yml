@@ -69,7 +69,13 @@ jobs:
       - name: Sintetizar .env.staging desde secrets
         env:
           VPS_DEPLOY_ENV: ${{ secrets.VPS_DEPLOY_ENV }}
-        run: printf '%s' "$VPS_DEPLOY_ENV" > .env.staging
+        run: |
+          printf '%s' "$VPS_DEPLOY_ENV" > .env.staging
+          lineas=$(grep -c '^[A-Z_][A-Z0-9_]*=' .env.staging || true)
+          if [ "$lineas" -lt 15 ]; then
+            echo "::error::El secret VPS_DEPLOY_ENV no tiene forma de archivo .env real (se esperaban ~35 líneas KEY=valor para Kestra/Superset/Nango/Playwright, se encontraron $lineas). No es el nombre del entorno ni un valor simple — es el contenido completo de un .env.staging real. Ver docs/adoptar-cicd-staging-produccion.md sección 3."
+            exit 1
+          fi
       - run: pnpm deploy:vps -- staging
         env:
           DOCKER_HOST: ssh://${{ secrets.VPS_SSH_USER }}@${{ secrets.VPS_SSH_HOST }}
@@ -109,7 +115,13 @@ jobs:
       - name: Sintetizar .env.production desde secrets
         env:
           VPS_DEPLOY_ENV: ${{ secrets.VPS_DEPLOY_ENV }}
-        run: printf '%s' "$VPS_DEPLOY_ENV" > .env.production
+        run: |
+          printf '%s' "$VPS_DEPLOY_ENV" > .env.production
+          lineas=$(grep -c '^[A-Z_][A-Z0-9_]*=' .env.production || true)
+          if [ "$lineas" -lt 15 ]; then
+            echo "::error::El secret VPS_DEPLOY_ENV no tiene forma de archivo .env real (se esperaban ~35 líneas KEY=valor para Kestra/Superset/Nango/Playwright, se encontraron $lineas). No es el nombre del entorno ni un valor simple — es el contenido completo de un .env.production real. Ver docs/adoptar-cicd-staging-produccion.md sección 3."
+            exit 1
+          fi
       - run: pnpm deploy:vps -- production
         env:
           DOCKER_HOST: ssh://${{ secrets.VPS_SSH_USER }}@${{ secrets.VPS_SSH_HOST }}
