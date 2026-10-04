@@ -8,9 +8,13 @@
 
 create table documentos (
   id uuid primary key default gen_random_uuid(),
-  organizacion_id uuid not null references organizaciones (id) on delete cascade,
+  -- Bug real, encontrado probando en vivo: sin default, el insert de la
+  -- UI (apps/web/src/pages/ia/documentos.tsx, solo manda {nombre}) viola
+  -- NOT NULL en organizacion_id/subido_por antes de llegar siquiera al
+  -- RLS. Mismo patrón que conversaciones_chat_ia (chat-companion-mechanism).
+  organizacion_id uuid not null default private.organizacion_id() references organizaciones (id) on delete cascade,
   nombre text not null,
-  subido_por uuid not null references auth.users (id) on delete cascade,
+  subido_por uuid not null default auth.uid() references auth.users (id) on delete cascade,
   creado_en timestamptz not null default now()
 );
 
@@ -48,7 +52,9 @@ create table versiones_documento (
   documento_id uuid not null references documentos (id) on delete cascade,
   storage_path text not null,
   estado text not null check (estado in ('procesando', 'activa', 'reemplazada', 'fallida')),
-  subida_por uuid not null references auth.users (id) on delete cascade,
+  -- Mismo bug real que documentos.subido_por: la UI nunca manda este
+  -- campo en el insert (apps/web/src/pages/ia/documentos.tsx).
+  subida_por uuid not null default auth.uid() references auth.users (id) on delete cascade,
   subida_en timestamptz not null default now(),
   motivo_error text
 );
