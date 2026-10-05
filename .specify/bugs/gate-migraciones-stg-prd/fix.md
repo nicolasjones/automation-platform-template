@@ -60,7 +60,8 @@ if (!exitoso) {
 - `pnpm test:db:validar-aditivas` → 5/5 pass (sin regresión).
 - `pnpm docs:check` → OK (Principio VII de la Constitución, cambio de código acompañado de doc).
 - Lectura manual de los 3 YAML editados completos — indentación y estructura de jobs verificada a ojo (no había `actionlint`/`js-yaml` instalado localmente para una validación automática; queda como follow-up).
-- **No verificado en vivo todavía**: disparar `production` contra un commit real sin `staging` exitoso y confirmar que falla antes de tocar secrets — requiere push a `main` y un `workflow_dispatch` real. Pendiente para `/speckit-bug-test`.
+- CI real del PR (`gh run list`, rama `gate-migraciones-stg-prd`): `Validate` y `Verificar alcance de plataforma` en `success` contra el commit final (`c47bb01`) — incluye `pnpm template:capabilities:check` y `pnpm template:adoption:check`, ambos en verde tras bumpear versiones y `template-adoption.json`.
+- **No verificado en vivo todavía**: disparar `production` contra un commit real sin `staging` exitoso y confirmar que falla antes de tocar secrets — requiere un `workflow_dispatch` real contra uno de los 3 workflows. Pendiente para `/speckit-bug-test`.
 
 ## Deviations from Assessment
 
