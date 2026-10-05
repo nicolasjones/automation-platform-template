@@ -71,6 +71,7 @@ drop function if exists private.retirar_elecciones_proveedor_capacidad();
 drop function if exists public.proveedores_efectivos_de_cliente(uuid);
 drop function if exists public.proveedores_capacidad_de_organizacion();
 drop function if exists private.resolver_proveedor_capacidad(uuid, uuid, text);
+drop function if exists private.resolver_proveedor_capacidad_interno(uuid, uuid, text);
 drop function if exists public.quitar_proveedor_capacidad_cliente(uuid, text);
 drop function if exists public.elegir_proveedor_capacidad_cliente(uuid, text, text, boolean);
 drop function if exists public.elegir_proveedor_capacidad_organizacion(text, text, boolean);

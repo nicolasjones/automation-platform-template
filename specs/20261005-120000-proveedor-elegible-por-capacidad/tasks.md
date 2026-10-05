@@ -35,3 +35,13 @@
 
 - Fase 2 antes de US1. US2 depende de US1 (mismas funciones de catálogo/conexión).
 - Sin UI: cada producto derivado monta su propio panel sobre estas funciones (fuera de alcance de este template).
+
+## Nota de desvío
+
+T005: revisión `authz-security` (antes de abrir el PR) encontró que
+`private.resolver_proveedor_capacidad` confiaba en `p_organizacion_id` sin
+validar que un rol `worker_<organizacion_id>` (grupo `workers_orquestacion`)
+solo pudiera pasar el suyo — cross-tenant read real (FR-009). Fix: split en
+`private.resolver_proveedor_capacidad_interno` (núcleo, sin grant propio) +
+`private.resolver_proveedor_capacidad` (gate por `session_user`, ver
+research.md R6). Ver commit de este PR.

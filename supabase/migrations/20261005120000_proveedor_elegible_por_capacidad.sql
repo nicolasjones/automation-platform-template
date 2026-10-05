@@ -16,6 +16,7 @@
 --   drop function if exists public.proveedores_efectivos_de_cliente(uuid);
 --   drop function if exists public.proveedores_capacidad_de_organizacion();
 --   drop function if exists private.resolver_proveedor_capacidad(uuid, uuid, text);
+--   drop function if exists private.resolver_proveedor_capacidad_interno(uuid, uuid, text);
 --   drop function if exists public.quitar_proveedor_capacidad_cliente(uuid, text);
 --   drop function if exists public.elegir_proveedor_capacidad_cliente(uuid, text, text, boolean);
 --   drop function if exists public.elegir_proveedor_capacidad_organizacion(text, text, boolean);
@@ -177,7 +178,12 @@ grant select on public.eventos_proveedor_capacidad to authenticated;
 -- Funciones (SECURITY DEFINER, search_path = '')
 -- ============================================================================
 
-create or replace function private.resolver_proveedor_capacidad(
+-- Núcleo de la resolución, sin chequeo de identidad del llamante: confía en
+-- que quien la invoca (la función pública de abajo, o cualquier otra
+-- función SECURITY DEFINER de esta misma migración) ya validó de dónde
+-- sale p_organizacion_id. Sin GRANT propio (solo se llama internamente,
+-- como dueño); nunca se expone directo a un rol externo.
+create or replace function private.resolver_proveedor_capacidad_interno(
   p_organizacion_id uuid,
   p_cliente_id uuid,
   p_capacidad text
@@ -286,8 +292,58 @@ begin
 end;
 $$;
 
+comment on function private.resolver_proveedor_capacidad_interno(uuid, uuid, text) is
+  'Núcleo de contracts/rpc.md de la spec de origen (precedencia cliente -> organización -> catálogo; nunca sustituye el proveedor elegido por otro ante una falla). Resolución < 10ms: todo el camino usa PK/índices, sin tabla sin filtrar. Sin chequeo de identidad del llamante — ese chequeo vive en el wrapper public-facing private.resolver_proveedor_capacidad() y en cada función pública que ya validó su propio p_organizacion_id/p_cliente_id antes de llegar acá.';
+
+revoke execute on function private.resolver_proveedor_capacidad_interno(uuid, uuid, text) from public, authenticated, anon;
+
+-- Wrapper alcanzable por kestra_orquestacion (despachador confiable, puede
+-- resolver cualquier organización) y por los roles worker_<organizacion_id>
+-- (grupo workers_orquestacion), que solo pueden resolver la SUYA propia,
+-- derivada de session_user vía private.organizacion_del_rol_actual() —
+-- mismo patrón que private.autorizar_llamante_ciclo
+-- (20260923000000_ciclo_ejecuciones_workers.sql). Sin este chequeo, el
+-- worker de una organización podría pasar el p_organizacion_id de otra y
+-- leer su resolución de proveedores — violación de FR-009, encontrada por
+-- authz-security antes de mergear (session_user no cambia con SECURITY
+-- DEFINER, así que este chequeo no puede vivir en el núcleo de arriba: ahí
+-- rompería las dos funciones públicas de más abajo, que llaman al núcleo
+-- después de validar su propio parámetro por otro camino, con
+-- session_user = 'authenticator' en producción vía PostgREST).
+create or replace function private.resolver_proveedor_capacidad(
+  p_organizacion_id uuid,
+  p_cliente_id uuid,
+  p_capacidad text
+)
+returns table (
+  proveedor text,
+  clave_ejecucion text,
+  origen text,
+  disponible boolean,
+  motivo_no_disponible text
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if session_user = 'kestra_orquestacion' then
+    null;
+  elsif session_user like 'worker\_%' then
+    if (select private.organizacion_del_rol_actual()) is distinct from p_organizacion_id then
+      raise exception 'NO_AUTORIZADO: el worker solo puede resolver proveedores de su propia organización' using errcode = 'P0001';
+    end if;
+  else
+    raise exception 'NO_AUTORIZADO: llamante no reconocido para resolver proveedores' using errcode = 'P0001';
+  end if;
+
+  return query select * from private.resolver_proveedor_capacidad_interno(p_organizacion_id, p_cliente_id, p_capacidad);
+end;
+$$;
+
 comment on function private.resolver_proveedor_capacidad(uuid, uuid, text) is
-  'Contrato: contracts/rpc.md de la spec de origen. Precedencia cliente -> organización -> catálogo; nunca sustituye el proveedor elegido por otro ante una falla (SIN_CONEXION/CONEXION_INVALIDA se informan, no se reemplazan). Resolución < 10ms: todo el camino usa PK/índices, sin tabla sin filtrar.';
+  'Punto de entrada para kestra_orquestacion/workers_orquestacion (contracts/rpc.md). Valida que un worker_* solo resuelva su propia organización antes de delegar en private.resolver_proveedor_capacidad_interno.';
 
 revoke execute on function private.resolver_proveedor_capacidad(uuid, uuid, text) from public, authenticated, anon;
 grant usage on schema private to kestra_orquestacion, workers_orquestacion;
@@ -541,7 +597,7 @@ begin
       where cp2.capacidad = e.capacidad and cp2.activo
     ) as opciones
   from elegibles e
-  cross join lateral private.resolver_proveedor_capacidad(v_organizacion_id, null, e.capacidad) r
+  cross join lateral private.resolver_proveedor_capacidad_interno(v_organizacion_id, null, e.capacidad) r
   left join public.capacidades_proveedores cat
     on cat.capacidad = e.capacidad and cat.proveedor = r.proveedor;
 end;
@@ -596,7 +652,7 @@ begin
     r.disponible,
     r.motivo_no_disponible
   from elegibles e
-  cross join lateral private.resolver_proveedor_capacidad(v_organizacion_id, p_cliente_id, e.capacidad) r
+  cross join lateral private.resolver_proveedor_capacidad_interno(v_organizacion_id, p_cliente_id, e.capacidad) r
   left join public.capacidades_proveedores cat
     on cat.capacidad = e.capacidad and cat.proveedor = r.proveedor;
 end;

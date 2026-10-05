@@ -45,7 +45,27 @@ de plataforma, no un dato de dominio de un producto). `capacidad` y
 cada producto define las suyas). `proveedor` es FK a `sistemas_externos.id`
 para que "requiere conexión" sea una FK natural contra el mismo catálogo.
 
-## R6. `clave_ejecucion` sin FK
+## R6. Aislamiento del gate de `workers_orquestacion` (hallazgo de authz-security)
+
+`private.resolver_proveedor_capacidad` recibe `p_organizacion_id` como
+parámetro. `workers_orquestacion` es un rol de GRUPO (todo `worker_<organizacion_id>`
+es miembro) — un `GRANT` a ese grupo por sí solo no distingue de qué
+organización es cada conexión real. Sin una validación interna, el worker
+de una organización podría pasar el `p_organizacion_id` de otra y leer su
+resolución (viola FR-009). Fix: el núcleo sin chequeo de identidad vive en
+`private.resolver_proveedor_capacidad_interno` (sin GRANT propio, solo
+invocado internamente por funciones que ya validaron su parámetro por otro
+camino); `private.resolver_proveedor_capacidad` es un wrapper delgado que
+exige, para `session_user like 'worker\_%'`, que coincida con
+`private.organizacion_del_rol_actual()` (mismo patrón que
+`private.autorizar_llamante_ciclo`, spec 016) antes de delegar. `session_user`
+no cambia con `SECURITY DEFINER`, así que el chequeo no podía vivir en el
+núcleo sin romper las dos funciones públicas (`proveedores_capacidad_de_organizacion`,
+`proveedores_efectivos_de_cliente`), alcanzables por `authenticated` vía
+PostgREST (`session_user = 'authenticator'` en producción, nunca
+`kestra_orquestacion` ni `worker_*`).
+
+## R7. `clave_ejecucion` sin FK
 
 El dato que cada producto usa para disparar la ejecución real (en
 `nicolasjones/estudio-contable-automation`, una clave de

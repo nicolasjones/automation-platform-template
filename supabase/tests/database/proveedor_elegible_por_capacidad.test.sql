@@ -3,7 +3,7 @@
 -- contracts/rpc.md.
 begin;
 
-select plan(39);
+select plan(45);
 
 -- ============================================================================
 -- Fixture
@@ -59,6 +59,23 @@ select is(has_table_privilege('authenticated', 'eventos_proveedor_capacidad', 'U
   'authenticated no tiene UPDATE directo sobre eventos_proveedor_capacidad');
 select is(has_table_privilege('authenticated', 'capacidades_proveedores', 'INSERT'), false,
   'authenticated no tiene INSERT directo sobre capacidades_proveedores (catálogo de solo lectura)');
+
+-- authz-security: resolver_proveedor_capacidad toma p_organizacion_id como
+-- parámetro — alcanzable solo por los roles de conexión directa
+-- (kestra_orquestacion confiable; workers_orquestacion valida su propia
+-- organización dentro de la función), nunca por un rol con JWT.
+select is(has_function_privilege('authenticated', 'private.resolver_proveedor_capacidad(uuid, uuid, text)', 'EXECUTE'), false,
+  'authenticated no puede resolver proveedores directamente (solo kestra_orquestacion/workers_orquestacion)');
+select is(has_function_privilege('kestra_orquestacion', 'private.resolver_proveedor_capacidad(uuid, uuid, text)', 'EXECUTE'), true,
+  'kestra_orquestacion sí puede resolver proveedores (despachador confiable)');
+select is(has_function_privilege('workers_orquestacion', 'private.resolver_proveedor_capacidad(uuid, uuid, text)', 'EXECUTE'), true,
+  'workers_orquestacion sí puede resolver proveedores (valida su propia organización adentro)');
+select is(has_function_privilege('authenticated', 'private.resolver_proveedor_capacidad_interno(uuid, uuid, text)', 'EXECUTE'), false,
+  'authenticated no puede llamar directo al núcleo sin chequeo de identidad');
+select is(has_function_privilege('kestra_orquestacion', 'private.resolver_proveedor_capacidad_interno(uuid, uuid, text)', 'EXECUTE'), false,
+  'ni siquiera kestra_orquestacion puede saltear el gate y llamar directo al núcleo');
+select is(has_function_privilege('workers_orquestacion', 'private.resolver_proveedor_capacidad_interno(uuid, uuid, text)', 'EXECUTE'), false,
+  'ni siquiera workers_orquestacion puede saltear el gate y llamar directo al núcleo');
 
 -- ============================================================================
 -- Catálogo visible y default sin ninguna elección
@@ -193,7 +210,7 @@ select results_eq(
 reset role;
 
 select is(
-  (select motivo_no_disponible from private.resolver_proveedor_capacidad('a1111111-1111-1111-1111-111111111111', null, 'capacidad-prueba')),
+  (select motivo_no_disponible from private.resolver_proveedor_capacidad_interno('a1111111-1111-1111-1111-111111111111', null, 'capacidad-prueba')),
   'CONEXION_INVALIDA',
   'el motivo de no disponibilidad es CONEXION_INVALIDA'
 );
@@ -201,13 +218,13 @@ select is(
 delete from conexiones where id = 'a4000000-0000-0000-0000-000000000001';
 
 select is(
-  (select motivo_no_disponible from private.resolver_proveedor_capacidad('a1111111-1111-1111-1111-111111111111', null, 'capacidad-prueba')),
+  (select motivo_no_disponible from private.resolver_proveedor_capacidad_interno('a1111111-1111-1111-1111-111111111111', null, 'capacidad-prueba')),
   'SIN_CONEXION',
   'sin ninguna conexión al sistema externo, el motivo es SIN_CONEXION'
 );
 
 select is(
-  (select proveedor from private.resolver_proveedor_capacidad('a1111111-1111-1111-1111-111111111111', null, 'capacidad-prueba')),
+  (select proveedor from private.resolver_proveedor_capacidad_interno('a1111111-1111-1111-1111-111111111111', null, 'capacidad-prueba')),
   'externo',
   'incluso sin conexión, el proveedor efectivo sigue siendo el elegido (no se sustituye solo)'
 );
@@ -236,20 +253,26 @@ select lives_ok(
   'el administrador de X pone a su cliente en el proveedor propio (excepción, FR-003)'
 );
 
--- private.resolver_proveedor_capacidad solo la ejecutan kestra_orquestacion
--- / workers_orquestacion (contracts/rpc.md); se consulta acá como postgres
--- (dueño de la función) para verificar la resolución directamente, no como
--- lo haría el panel (que usa las funciones públicas de más abajo).
+-- private.resolver_proveedor_capacidad_interno es el núcleo sin chequeo de
+-- identidad (contracts/rpc.md); se consulta acá como postgres (dueño) para
+-- verificar la resolución directamente. El wrapper
+-- private.resolver_proveedor_capacidad (gate kestra_orquestacion/worker_*)
+-- no se puede ejercer end-to-end en esta suite sin una conexión real con
+-- ese session_user — mismo límite ya documentado en
+-- orquestacion_multi_organizacion.test.sql para autorizar_llamante_ciclo;
+-- sus únicos dos caminos (kestra_orquestacion sin restricción, worker_*
+-- exige session_user = p_organizacion_id vía organizacion_del_rol_actual)
+-- se verifican por lectura de código y por el chequeo de grants de abajo.
 reset role;
 
 select results_eq(
-  $$select proveedor, origen from private.resolver_proveedor_capacidad('a1111111-1111-1111-1111-111111111111', 'a3000000-0000-0000-0000-000000000001', 'capacidad-prueba')$$,
+  $$select proveedor, origen from private.resolver_proveedor_capacidad_interno('a1111111-1111-1111-1111-111111111111', 'a3000000-0000-0000-0000-000000000001', 'capacidad-prueba')$$,
   $$values ('propio'::text, 'cliente'::text)$$,
   'el cliente con excepción resuelve "propio" vía origen cliente (precedencia cliente > organización)'
 );
 
 select results_eq(
-  $$select proveedor, origen from private.resolver_proveedor_capacidad('a1111111-1111-1111-1111-111111111111', null, 'capacidad-prueba')$$,
+  $$select proveedor, origen from private.resolver_proveedor_capacidad_interno('a1111111-1111-1111-1111-111111111111', null, 'capacidad-prueba')$$,
   $$values ('externo'::text, 'organizacion'::text)$$,
   'un cliente sin excepción (o sin cliente puntual) sigue heredando el default de organización'
 );
@@ -266,7 +289,7 @@ select lives_ok(
 reset role;
 
 select results_eq(
-  $$select proveedor, origen from private.resolver_proveedor_capacidad('a1111111-1111-1111-1111-111111111111', 'a3000000-0000-0000-0000-000000000001', 'capacidad-prueba')$$,
+  $$select proveedor, origen from private.resolver_proveedor_capacidad_interno('a1111111-1111-1111-1111-111111111111', 'a3000000-0000-0000-0000-000000000001', 'capacidad-prueba')$$,
   $$values ('externo'::text, 'organizacion'::text)$$,
   'tras quitar la excepción, el cliente vuelve a heredar el default de organización (FR-003)'
 );
@@ -391,7 +414,7 @@ select is(
 );
 
 select results_eq(
-  $$select proveedor, origen, disponible from private.resolver_proveedor_capacidad('a1111111-1111-1111-1111-111111111111', null, 'capacidad-prueba')$$,
+  $$select proveedor, origen, disponible from private.resolver_proveedor_capacidad_interno('a1111111-1111-1111-1111-111111111111', null, 'capacidad-prueba')$$,
   $$values ('propio'::text, 'catalogo'::text, true)$$,
   'tras el retiro, la resolución cae sola al default del catálogo'
 );
