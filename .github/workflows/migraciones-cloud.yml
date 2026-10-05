@@ -19,6 +19,18 @@ name: Migraciones cloud
 # rechaza cualquier migración destructiva que no documente su Reversión
 # (misma convención ya vigente en supabase/migrations/). Corre en ambos
 # jobs para fallar rápido en staging, no solo recién en producción.
+#
+# Gate stg→prd (bug gate-migraciones-stg-prd, 2026-10-05): `production` no
+# puede usar `needs: staging` — dispara por workflow_dispatch, un evento
+# distinto al push que dispara staging, así que nunca son la misma corrida.
+# En su lugar, el primer step de `production` corre
+# scripts/verificar-staging-exitoso.mjs, que consulta la API de runs de
+# GitHub Actions y exige un run de `staging` con conclusion=success para el
+# mismo head_sha antes de instalar nada o tocar SUPABASE_DB_URL de
+# producción. Reemplaza el trade-off de tasks.md T027 (required reviewers
+# descartado ahí por costo en repos privados — hacer público el template
+# lo desbloqueó gratis ahí, pero no resuelve el caso real: los productos
+# derivados de este template son privados — ver research.md §6, Revisión 2).
 
 on:
   push:
@@ -32,6 +44,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   staging:
@@ -69,6 +82,10 @@ jobs:
         with:
           node-version: 24
       - run: pnpm install --frozen-lockfile
+      - name: Exigir que staging haya corrido exitosamente para este commit
+        run: pnpm ci:verificar-staging-exitoso -- --workflow migraciones-cloud.yml --head-sha "$GITHUB_SHA"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: pnpm db:validar:aditivas
       - name: Instalar Supabase CLI
         run: |

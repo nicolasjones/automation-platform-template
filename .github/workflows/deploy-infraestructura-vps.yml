@@ -23,6 +23,15 @@ name: Deploy infraestructura VPS
 # coordinador, ver tasks.md T027. Los Environments se conservan para
 # separar secrets por entorno; solo se cae la regla de required reviewers.
 #
+# Gate stg→prd (bug gate-migraciones-stg-prd, 2026-10-05): `production` no
+# puede usar `needs: staging` (dispara por workflow_dispatch, no por push,
+# nunca es la misma corrida). En su lugar, el primer step de `production`
+# corre scripts/verificar-staging-exitoso.mjs contra la API de runs de
+# GitHub Actions y exige un run de `staging` con conclusion=success para
+# el mismo head_sha antes de tocar VPS_SSH_PRIVATE_KEY/VPS_DEPLOY_ENV de
+# producción. Mismo mecanismo que migraciones-cloud.yml — ver ahí el
+# porqué de no depender de required reviewers (repos derivados privados).
+#
 # ssh-keyscan ya no redirige su stderr a /dev/null: silenciaba cualquier
 # error real de conexión (host inalcanzable, DNS, etc.), dejando el job sin
 # ningún rastro del motivo cuando fallaba — encontrado en T025 al disparar
@@ -47,6 +56,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   staging:
@@ -108,6 +118,10 @@ jobs:
         with:
           node-version: 24
       - run: pnpm install --frozen-lockfile
+      - name: Exigir que staging haya corrido exitosamente para este commit
+        run: pnpm ci:verificar-staging-exitoso -- --workflow deploy-infraestructura-vps.yml --head-sha "$GITHUB_SHA"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Iniciar ssh-agent con la clave del VPS de producción
         env:
           VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
