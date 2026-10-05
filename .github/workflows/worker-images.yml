@@ -93,7 +93,13 @@ jobs:
               --load .
 
             report=$(mktemp)
-            docker scout cves --format json --only-severity critical,high "local/worker-$worker:$SHA" > "$report" || true
+            # --format json no existe en docker scout (CLI v1.26.0): el
+            # equivalente JSON real es --format gitlab (esquema de GitLab
+            # Container Scanning, severity en "Title Case" — validar-scan-
+            # worker.mjs ya lo normaliza). --format json imprimía la ayuda
+            # del comando en vez de fallar, y el reporte rompía el parseo
+            # JSON del validador.
+            docker scout cves --format gitlab --only-severity critical,high "local/worker-$worker:$SHA" > "$report" || true
             node scripts/validar-scan-worker.mjs "$report" .github/worker-vulnerability-exceptions.json
             docker tag "local/worker-$worker:$SHA" "local/worker-$worker:test"
             node scripts/smoke-imagenes-workers.mjs "local/worker-" "$worker"

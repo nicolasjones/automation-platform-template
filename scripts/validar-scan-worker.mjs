@@ -11,19 +11,27 @@ const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
 const exceptions = exceptionsPath
   ? JSON.parse(fs.readFileSync(exceptionsPath, 'utf8')).exceptions ?? []
   : [];
-const blocked = new Set(['CRITICAL', 'HIGH', 'critical', 'high']);
+// --format json ya no existe en docker scout (reemplazado por --format
+// gitlab) — el reporte GitLab trae severity en "Title Case"
+// ("Critical"/"High"), no en mayúsculas ni minúsculas sueltas; se compara
+// sin distinguir mayúsculas para no depender de la convención exacta de
+// cada versión del CLI.
+const blocked = new Set(['CRITICAL', 'HIGH']);
 const findings = [];
 
 function collect(value) {
   if (!value || typeof value !== 'object') return;
-  if (blocked.has(value.severity)) findings.push(value);
+  if (typeof value.severity === 'string' && blocked.has(value.severity.toUpperCase())) findings.push(value);
   for (const child of Object.values(value)) collect(child);
 }
 
 collect(report);
 const now = Date.now();
 const unresolved = findings.filter((finding) => {
-  const id = finding.id ?? finding.vulnerabilityId ?? finding.cve ?? finding.CVE;
+  // El reporte GitLab trae un `id` interno (hash) además del CVE real —
+  // priorizar el identificador humano/estable para que las excepciones se
+  // puedan referenciar por CVE, no por un hash que cambia entre corridas.
+  const id = finding.cve ?? finding.CVE ?? finding.vulnerabilityId ?? finding.id;
   return !exceptions.some((exception) =>
     exception.id === id &&
     exception.approved_by &&
