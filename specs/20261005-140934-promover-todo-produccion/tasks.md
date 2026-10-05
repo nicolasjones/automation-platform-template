@@ -24,9 +24,9 @@
 - [X] T005 [US1] Crear `.github/workflows/promover-todo-a-produccion.yml` según `contracts/promover-todo-a-produccion.md` → "Forma del workflow": `workflow_dispatch` único, 3 jobs `uses: ./.github/workflows/<archivo>.yml` + `secrets: inherit`, job `promover-refine` con `permissions: contents: write` y el step `git push origin main:production`
 - [X] T006 [US1] Validación sin riesgo (`quickstart.md`): confirmado en vivo (run [37357870406](https://github.com/nicolasjones/automation-platform-template/actions/runs/37357870406), post-fix de `actions: read`) — los 3 jobs reutilizados corren de verdad (ya no `startup_failure`) y fallan correctamente en su gate ("staging nunca corrió exitosamente para el commit..."), sin bloquearse entre sí. `promover-refine` pasó el `git push` y falló limpio en el step de Vercel por falta de `VERCEL_TOKEN`/`VERCEL_PROJECT_ID` en este repo (correcto: el template no tiene un proyecto Vercel real propio, esos secrets solo existen en el producto). Ningún secret real de producción se resolvió ni se usó. Nota de desvío (ver `research.md` §5): tres intentos previos habían fallado con `startup_failure`/0 jobs — causa real: `promover-todo-a-produccion.yml` no otorgaba `actions: read` arriba, corregido en PR #31.
 - [X] T007 [US1] Bootstrap (ya no reasigna nada de Vercel — ver `contracts/promover-todo-a-produccion.md` revisado, se promueve por `deployment_id`, no por "Production Branch"): rama `production` creada desde el commit de `main` (el usuario la corrió directo, el clasificador bloqueó el intento de un agente); secrets `VERCEL_TOKEN`/`VERCEL_PROJECT_ID` cargados por el usuario en el Environment `promover-todo-a-produccion` del producto (`estudio-contable-automation`) — confirmados por nombre vía API, sin ver sus valores.
-- [ ] T008 [US1] **Requiere OK explícito del usuario antes de ejecutar** — Validación completa (`quickstart.md`): con `staging` real en verde en los 3 mecanismos de GitHub Actions, disparar el workflow y confirmar que los 3 se promueven y que `promover-refine` promueve por `deployment_id` el deployment que generó el push a `production`
+- [X] T008 [US1] Validación completa (`quickstart.md`), con OK explícito del usuario: corrida real contra `estudio-contable-automation` (run [37363470211](https://github.com/nicolasjones/estudio-contable-automation/actions/runs/37363470211)) — `migraciones-cloud`, `deploy-infraestructura-vps` y `publicar-flows-kestra` se promovieron a producción de verdad, de punta a punta, con un solo disparo. `promover-refine` falló con `422` al intentar promover el deployment de Vercel por `deployment_id` — investigado a fondo (`research.md` Revisión final): ese endpoint no acepta deployments con `target: null`, que es lo único que genera una rama que no es la Production Branch configurada (`main`). No hay forma gratis de resolverlo (ver FR-003/FR-004 de `spec.md`) — decisión del usuario: Refine queda fuera del botón único, código muerto removido (T016).
 
-**Checkpoint**: un solo disparo promueve los 4 mecanismos; el frontend deja de auto-desplegar a producción en cada push a `main`.
+**Checkpoint**: un solo disparo promueve los 3 mecanismos de GitHub Actions a producción, confirmado en vivo. El frontend (Refine) queda fuera de alcance por una limitación de plan de Vercel documentada, no por falta de intento.
 
 ## Phase 4: User Story 2 - Un mecanismo nuevo se suma sin reinventar nada (P2)
 
@@ -38,6 +38,12 @@
 - [X] T010 [US2] [P] Actualizar `docs/adoptar-cicd-staging-produccion.md` con una sección nueva que documente el workflow único, el bootstrap de Vercel, y la regla de extensión para productos derivados que adopten esta capacidad
 
 **Checkpoint**: la regla de extensión es descubrible desde el contrato compartido, no solo desde el código de esta spec.
+
+## Phase 6: Cerrar Refine fuera de alcance (decisión del usuario, 2026-10-05)
+
+- [X] T016 Sacar el job `promover-refine` de `.github/workflows/promover-todo-a-produccion.yml`; borrar `scripts/promover-deployment-vercel.mjs`/`.test.mjs` y los alias `vercel:promover`/`test:vercel:promover` de `package.json` — código que no funciona no queda a medio terminar
+- [X] T017 Actualizar `spec.md` (FR-003/FR-004/SC-002 tachados, marcados "no entregado, limitación conocida"), `research.md` (Revisión final) y `contracts/promover-todo-a-produccion.md` (sección "Refine/Vercel: limitación conocida") documentando por qué no hay alternativa gratis real
+- [X] T018 Bumpear `unified-production-promotion` en `template-capabilities.json`/`template-adoption.json` reflejando que el paquete final cubre 3 mecanismos, no 4
 
 ## Phase 5: Polish & Cross-Cutting
 

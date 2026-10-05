@@ -11,7 +11,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write   # necesario para el push explícito main -> production (job refine)
+  contents: read
   actions: read     # los 3 workflows reutilizados lo requieren (verificar-staging-exitoso.mjs) — sin otorgarlo acá, GitHub rechaza la corrida completa (startup_failure, 0 jobs)
 
 jobs:
@@ -26,35 +26,15 @@ jobs:
   publicar-flows-kestra:
     uses: ./.github/workflows/publicar-flows-kestra.yml
     secrets: inherit
-
-  promover-refine:
-    runs-on: [self-hosted, platform-local]
-    environment: promover-todo-a-produccion
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-        with: { version: 11.19.0 }
-      - uses: actions/setup-node@v4
-        with: { node-version: 24 }
-      - run: pnpm install --frozen-lockfile
-      - name: Promover main a production (push explícito)
-        run: git push origin main:production
-      - name: Apuntar producción al deployment de ese push
-        run: pnpm vercel:promover -- --branch production
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 ```
 
 ## Reglas del contrato
 
 1. **Nunca se dispara por `push`** — solo `workflow_dispatch`, igual criterio que el gate individual.
-2. Los tres jobs reutilizados (`migraciones-cloud`, `deploy-infraestructura-vps`, `publicar-flows-kestra`) **no duplican ningún step** — invocan los workflows existentes vía `workflow_call` + `secrets: inherit`. Cada uno sigue verificando su propio staging antes de tocar sus secretos de producción (contrato de `workflow-gate.md`, sin cambios).
+2. Los tres jobs reutilizados (`migraciones-cloud`, `deploy-infraestructura-vps`, `publicar-flows-kestra`) **no duplican ningún step** — invocan los workflows existentes vía `workflow_call` + `secrets: inherit`. Cada uno sigue verificando su propio staging antes de tocar sus secretos de producción (contrato de `workflow-gate.md`, sin cambios). Verificado en vivo de punta a punta (2026-10-05): los 3 se promovieron correctamente en una corrida real contra `estudio-contable-automation`.
 3. Para que un workflow reusable funcione desde `workflow_call`, su job `production` debe aceptar ambos triggers: `if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'`. Su job `staging` no cambia (`if: github.event_name == 'push'`).
-4. El job `promover-refine` no depende de los otros tres (`needs` vacío) — una falla en cualquiera de los cuatro **no bloquea** la promoción de los demás (FR-006). No hay gate técnico de "staging corrió" para Refine en esta spec porque Vercel ya genera su propio deploy por commit, verificable manualmente antes de disparar el botón — ver Residual Risk en `quickstart.md`. El `git push origin main:production` no usa `--force` a propósito: si `production` alguna vez divergió de `main` (p. ej. un commit directo a esa rama), el push falla con el rechazo estándar de git por non-fast-forward — falla visible y ruidosa, nunca silenciosa, pero sin ningún mensaje propio de este workflow explicándolo (queda como log crudo de git). `scripts/promover-deployment-vercel.mjs` reintenta hasta que ese deployment esté `READY` (timeout configurable, 5 minutos por defecto) antes de promoverlo — ver `research.md` §3 para por qué se promueve por `deployment_id` y no reasignando la "Production Branch" del proyecto.
-5. **Regla de extensión (FR-007, obligatoria para specs futuras)**: cualquier mecanismo de plataforma nuevo que introduzca su propio split staging→producción (un flow, un worker, un dashboard de Superset con su propio ciclo, etc.) DEBE agregar un job a `promover-todo-a-produccion.yml` — vía `workflow_call` si es un workflow de GitHub Actions, o un step equivalente si no lo es (como el caso de Refine). No se habilita crear un `workflow_dispatch` de producción nuevo que quede fuera de este punto único. Documentar la incorporación en este mismo archivo, sección "Mecanismos registrados" (ver abajo).
+4. Los 3 jobs no dependen entre sí (`needs` vacío) — una falla en cualquiera **no bloquea** la promoción de los demás (FR-006).
+5. **Regla de extensión (FR-007, obligatoria para specs futuras)**: cualquier mecanismo de plataforma nuevo que introduzca su propio split staging→producción (un flow, un worker, un dashboard de Superset con su propio ciclo, etc.) DEBE agregar un job a `promover-todo-a-produccion.yml` — vía `workflow_call` si es un workflow de GitHub Actions, o un step equivalente si no lo es. No se habilita crear un `workflow_dispatch` de producción nuevo que quede fuera de este punto único. Documentar la incorporación en este mismo archivo, sección "Mecanismos registrados" (ver abajo).
 6. El OK para disparar este workflow sigue siendo una decisión humana explícita — este contrato no introduce ni depende de ningún control técnico de aprobación de GitHub (ver Assumptions de `spec.md`).
 
 ## Mecanismos registrados
@@ -64,11 +44,17 @@ jobs:
 | Migraciones de Supabase | `workflow_call` → `migraciones-cloud.yml` | esta spec |
 | Infraestructura VPS (Kestra/Superset/Nango) | `workflow_call` → `deploy-infraestructura-vps.yml` | esta spec |
 | Flows de Kestra | `workflow_call` → `publicar-flows-kestra.yml` | esta spec |
-| Refine (frontend) | step `git push origin main:production` | esta spec |
+| Refine (frontend) | **fuera de alcance** — ver "Refine/Vercel: limitación conocida" abajo | — |
 
-## Bootstrap de Vercel (una sola vez, fuera del workflow recurrente)
+## Refine/Vercel: limitación conocida (decisión del usuario, 2026-10-05, no bloqueante)
 
-- Crear la rama `production` en el repo, apuntando al commit actual de `main` — hecho.
-- Crear un Access Token de Vercel (idealmente scopeado al proyecto) **generado y cargado por el usuario directamente** — un agente no debe generar ni ver el valor de un token real — y guardarlo como secret `VERCEL_TOKEN` en el GitHub Environment `promover-todo-a-produccion` del repo que adopte esta capacidad.
-- Guardar también `VERCEL_PROJECT_ID` (no es secreto, pero se guarda igual como secret de Environment por simplicidad) — se obtiene de `vercel.com/<scope>/<proyecto>/settings` o de la API (`GET /v9/projects/{idOrName}`, campo `id`).
-- No hace falta tocar ninguna configuración de Vercel (dominios, Production Branch, variables de entorno) — la promoción por `deployment_id` no depende de ninguna de esas.
+Se intentaron dos caminos reales y ambos fallaron contra el proyecto Vercel real (plan Hobby/personal):
+
+1. Reasignar la "Production Branch" del proyecto a una rama `production` nueva — descartado sin ejecutarlo: no existe ningún campo de API documentado para leerla ni cambiarla, y tampoco aparece en la UI del dashboard (ni en Settings → Git, ni en Settings → General) para este plan.
+2. Promover por `deployment_id` (`POST /v10/projects/{id}/promote/{deploymentId}`) el deployment generado por un push a una rama `production` — **confirmado en vivo que falla** con `422 unprocessable_entity`. Causa real: ese endpoint solo acepta deployments que ya nacieron con `target: "production"`, y eso solo pasa en deployments construidos desde la rama que Vercel ya tiene como Production Branch — es decir, no resuelve nada, es circular.
+
+Por qué no hay alternativa gratis real: todas las specs de este repo mergean a `main` (convención central del repo, no específica de Refine). Si `main` queda fijo como la Production Branch de Vercel (lo único que el plan gratis permite), **cualquier merge de cualquier spec** dispara un deploy a producción real sin control — no se puede aislar "solo lo de Refine" sin separar `main` de la rama de producción de Vercel. La única forma de lograr esa separación sin pagar sería reestructurar a qué rama mergea *todo* el repo, un cambio de convención central desproporcionado frente al costo de Vercel Pro (~USD 20/mes).
+
+**Decisión**: Refine queda fuera del botón único por ahora. `main` sigue desplegando a producción automáticamente en cada push, igual que antes de esta spec — no se empeoró nada, tampoco se resolvió para Refine. Revisar si corresponde pagar Vercel Pro cuando haya un caso de negocio real que lo justifique (no una tarea abierta de esta spec).
+
+**Qué quedó sin usar, a propósito, no limpiado del todo**: la rama `production` creada en el repo durante la investigación, y el Environment `promover-todo-a-produccion` con los secrets `VERCEL_TOKEN`/`VERCEL_PROJECT_ID` ya cargados por el usuario. No se borran automáticamente (acciones destructivas no se hacen sin pedirlo); quedan disponibles si en el futuro se retoma este camino.

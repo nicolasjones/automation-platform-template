@@ -76,9 +76,9 @@
     },
     {
       "id": "unified-production-promotion",
-      "version": "1.1.1",
-      "title": "Botón único de promoción a producción (agrupa migraciones, VPS y flows vía workflow_call, más Refine)",
-      "paths": [".github/workflows/promover-todo-a-produccion.yml", "scripts/promover-deployment-vercel.mjs", "scripts/promover-deployment-vercel.test.mjs"]
+      "version": "1.2.0",
+      "title": "Botón único de promoción a producción (agrupa migraciones, VPS y flows vía workflow_call — Refine fuera de alcance, limitación de plan de Vercel)",
+      "paths": [".github/workflows/promover-todo-a-produccion.yml"]
     },
     {
       "id": "template-capability-sync",
