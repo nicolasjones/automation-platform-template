@@ -1,31 +1,32 @@
 name: Promover todo a producción
 
 # Punto único de promoción a producción (spec 20261005-140934-promover-
-# todo-produccion). Agrupa en un solo workflow_dispatch los 4 mecanismos
-# de plataforma que hoy tienen split staging→producción: migraciones de
-# Supabase, infraestructura VPS (Kestra/Superset/Nango), flows de Kestra
-# — los tres vía workflow_call, sin duplicar sus steps — y Refine/Vercel.
+# todo-produccion). Agrupa en un solo workflow_dispatch los mecanismos de
+# plataforma que hoy tienen split staging→producción: migraciones de
+# Supabase, infraestructura VPS (Kestra/Superset/Nango) y flows de Kestra
+# — los tres vía workflow_call, sin duplicar sus steps.
 #
-# Cada uno de los 3 jobs reutilizados sigue verificando por su cuenta que
-# su staging corrió exitosamente antes de tocar cualquier secret de
-# producción (scripts/verificar-staging-exitoso.mjs, bug
-# gate-migraciones-stg-prd) — este workflow no debilita ni saltea esa
-# verificación, solo agrupa el disparo.
+# Cada uno sigue verificando por su cuenta que su staging corrió
+# exitosamente antes de tocar cualquier secret de producción
+# (scripts/verificar-staging-exitoso.mjs, bug gate-migraciones-stg-prd) —
+# este workflow no debilita ni saltea esa verificación, solo agrupa el
+# disparo. Los 3 jobs son independientes entre sí (sin `needs`): si uno
+# falla, los demás se promueven igual si su propio staging es válido.
+# Verificado en vivo de punta a punta (2026-10-05): los 3 se promovieron
+# correctamente en una corrida real.
 #
-# Los 4 jobs son independientes entre sí (sin `needs`): si uno falla
-# (p. ej. su staging no corrió para este commit), los demás se promueven
-# igual si su propio staging es válido.
-#
-# Refine/Vercel: no tiene (todavía) un gate técnico como los otros 3 —
-# "promover" es un push explícito main -> production, seguido de
-# scripts/promover-deployment-vercel.mjs, que apunta el tráfico de
-# producción al deployment que Vercel generó para ese push (POST
-# /v10/projects/{id}/promote/{deploymentId} — no rebuildea nada). No se
-# reasigna la "Production Branch" del proyecto: no hay un campo de API
-# confiable para eso (ver research.md §3, revisado), promover por
-# deployment_id es el mecanismo documentado y no depende de esa config.
-# Requiere los secrets VERCEL_TOKEN y VERCEL_PROJECT_ID — creados una sola
-# vez (bootstrap manual, ver contracts/promover-todo-a-produccion.md).
+# Refine/Vercel QUEDA FUERA de este punto único (decisión del usuario,
+# 2026-10-05) — no por falta de intento, por un límite real de plan: el
+# plan Hobby/personal de Vercel no permite que la "Production Branch" sea
+# distinta de la rama de integración del repo, ni por API ni por UI
+# (confirmado en vivo, ver research.md §3). Como además todas las specs de
+# este repo mergean a `main`, separar main de "lo que Vercel considera
+# producción" solo es posible pagando Vercel Pro o reestructurando a qué
+# rama mergea todo el repo — ninguna de las dos se hace en esta spec.
+# `main` sigue desplegando a producción automáticamente en cada push,
+# igual que antes de esta spec — no se empeoró nada, tampoco se arregló
+# para Refine. Revisar si corresponde pagar el plan cuando haya un caso de
+# negocio real que lo justifique.
 #
 # Regla de extensión (FR-007 de la spec): todo mecanismo de plataforma
 # nuevo con su propio split staging→producción debe sumar su job acá —
@@ -44,14 +45,13 @@ name: Promover todo a producción
 # Los 3 workflows reutilizados declaran `actions: read` en su propio
 # archivo (lo necesita scripts/verificar-staging-exitoso.mjs) — sin esa
 # misma concesión acá arriba, GitHub rechaza la corrida COMPLETA con
-# startup_failure y 0 jobs, antes de que arranque nada (confirmado: dos
-# corridas reales fallaron así hasta este fix).
+# startup_failure y 0 jobs, antes de que arranque nada.
 
 on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 jobs:
@@ -66,25 +66,3 @@ jobs:
   publicar-flows-kestra:
     uses: ./.github/workflows/publicar-flows-kestra.yml
     secrets: inherit
-
-  promover-refine:
-    runs-on: [self-hosted, platform-local]
-    environment: promover-todo-a-produccion
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.19.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-      - run: pnpm install --frozen-lockfile
-      - name: Promover main a production (push explícito)
-        run: git push origin main:production
-      - name: Apuntar producción al deployment de ese push
-        run: pnpm vercel:promover -- --branch production
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
