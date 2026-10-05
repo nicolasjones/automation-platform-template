@@ -89,6 +89,16 @@ Scanning) y ajustado el validador: compara `severity` sin distinguir
 mayúsculas (gitlab usa "Title Case") y prioriza el `cve` sobre el `id`
 interno (un hash) del reporte al matchear excepciones.
 
+**`docker scout` también exige sesión de Docker Hub (2026-10-05)**: con
+`--format gitlab` ya resuelto, la primera corrida real devolvió un
+reporte vacío (`SyntaxError: Unexpected end of JSON input`) — scout
+imprimía "Log in with your Docker ID or email address to use docker
+scout." en vez de un reporte. El login a `ghcr.io` que ya hace el job
+no alcanza: scout necesita su propia sesión contra Docker Hub. Se
+agregó un `docker login` adicional con secrets nuevos
+(`DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN`, cuenta gratuita dedicada,
+token de solo lectura) antes del escaneo.
+
 ## Reversión
 
 Revertir el merge del PR de adopción y recrear los runners (verificando antes
