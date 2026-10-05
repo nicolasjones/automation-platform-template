@@ -22,6 +22,17 @@ siguen creando igual, porque siguen siendo lo que separa los secrets de
 staging de los de producción — solo que ya no llevan ninguna regla de
 protección. Crear estos seis Environments en **Settings → Environments**:
 
+**Actualizado otra vez (bug `gate-migraciones-stg-prd`, ver `tasks.md` T030)**:
+"el propio acto de disparar `workflow_dispatch`" dejó de ser la única
+barrera — causó un incidente real (81 migraciones promovidas de golpe en
+un producto derivado sin validación previa). `production` ahora verifica
+solo, antes de tocar cualquier secret, que `staging` corrió exitosamente
+para el mismo commit (`scripts/verificar-staging-exitoso.mjs`, usa el
+`GITHUB_TOKEN` por defecto del job — no hace falta crear ningún secret
+nuevo, solo declarar `permissions: actions: read` en el workflow, ya
+incluido en los tres). No hay ningún paso manual adicional que configurar
+para esto en el producto derivado.
+
 | Environment | Mecanismo |
 |---|---|
 | `migraciones-cloud-staging` | CI de migraciones Supabase |

@@ -16,6 +16,14 @@ name: Publicar flows Kestra
 # required reviewers (plan de pago no disponible aquí). Decisión del
 # coordinador, ver tasks.md T027. Los Environments se conservan para
 # separar secrets por entorno; solo se cae la regla de required reviewers.
+#
+# Gate stg→prd (bug gate-migraciones-stg-prd, 2026-10-05): `production` no
+# puede usar `needs: staging` (dispara por workflow_dispatch, no por push,
+# nunca es la misma corrida). En su lugar, el primer step de `production`
+# corre scripts/verificar-staging-exitoso.mjs contra la API de runs de
+# GitHub Actions y exige un run de `staging` con conclusion=success para
+# el mismo head_sha antes de tocar las credenciales de Kestra de
+# producción. Mismo mecanismo que migraciones-cloud.yml.
 
 on:
   push:
@@ -27,6 +35,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   staging:
@@ -69,6 +78,10 @@ jobs:
         with:
           node-version: 24
       - run: pnpm install --frozen-lockfile
+      - name: Exigir que staging haya corrido exitosamente para este commit
+        run: pnpm ci:verificar-staging-exitoso -- --workflow publicar-flows-kestra.yml --head-sha "$GITHUB_SHA"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publicar flows contra el Kestra de producción
         env:
           KESTRA_BASIC_AUTH_USERNAME: ${{ secrets.KESTRA_BASIC_AUTH_USERNAME }}
