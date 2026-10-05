@@ -18,6 +18,7 @@ name: Worker images
 # fallar (el error que el script escribe por stderr en ese caso no se
 # propaga a través de la sustitución de proceso).
 on:
+  workflow_dispatch: {}
   push:
     branches: [main]
     paths:

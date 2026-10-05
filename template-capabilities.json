@@ -34,7 +34,7 @@
     },
     {
       "id": "worker-image-security",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "title": "Construcción y runtime seguro de workers",
       "paths": ["workers/Dockerfile", "workers/CONTRATO.md", "workers/egress-allowlists.json", ".github/workflows/worker-images.yml", "scripts/smoke-imagenes-workers.mjs", "scripts/validar-egress-workers.mjs"]
     },
