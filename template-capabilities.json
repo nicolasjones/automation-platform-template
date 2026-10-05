@@ -4,9 +4,9 @@
   "capabilities": [
     {
       "id": "cloud-migrations-gate",
-      "version": "1.1.1",
+      "version": "1.2.0",
       "title": "CI de migraciones de Supabase cloud con gate staging-producción",
-      "paths": ["scripts/migrar-supabase-cloud.mjs", "scripts/migrar-supabase-cloud.test.mjs", "scripts/validar-migraciones-aditivas.mjs", "scripts/validar-migraciones-aditivas.test.mjs", ".github/workflows/migraciones-cloud.yml"]
+      "paths": ["scripts/migrar-supabase-cloud.mjs", "scripts/migrar-supabase-cloud.test.mjs", "scripts/validar-migraciones-aditivas.mjs", "scripts/validar-migraciones-aditivas.test.mjs", "scripts/verificar-staging-exitoso.mjs", "scripts/verificar-staging-exitoso.test.mjs", ".github/workflows/migraciones-cloud.yml"]
     },
     {
       "id": "superset-dashboard-import",
@@ -16,9 +16,9 @@
     },
     {
       "id": "vps-deploy-gate",
-      "version": "1.0.5",
+      "version": "1.1.0",
       "title": "CI de deploy de infraestructura del VPS con gate staging-producción",
-      "paths": [".github/workflows/deploy-infraestructura-vps.yml", "infra/runner/Dockerfile"]
+      "paths": [".github/workflows/deploy-infraestructura-vps.yml", "infra/runner/Dockerfile", "scripts/verificar-staging-exitoso.mjs", "scripts/verificar-staging-exitoso.test.mjs"]
     },
     {
       "id": "worker-execution-cycle",
@@ -70,9 +70,9 @@
     },
     {
       "id": "safe-kestra-flow-publication",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "title": "Publicación segura de flows de Kestra",
-      "paths": ["infra/kestra/desplegar-flow.mjs", "infra/kestra/desplegar-flow.test.mjs", ".github/workflows/publicar-flows-kestra.yml"]
+      "paths": ["infra/kestra/desplegar-flow.mjs", "infra/kestra/desplegar-flow.test.mjs", ".github/workflows/publicar-flows-kestra.yml", "scripts/verificar-staging-exitoso.mjs", "scripts/verificar-staging-exitoso.test.mjs"]
     },
     {
       "id": "template-capability-sync",
