@@ -132,3 +132,34 @@ pena wirearlo a un workflow de push (fuera del alcance de esta spec).
   Exporta `SUPERSET_URL`/`SUPERSET_USERNAME`/`SUPERSET_PASSWORD` antes de
   correrlo a mano, o inyectalos como secrets si alguna vez se conecta a un
   workflow.
+
+## 6. Botón único de promoción a producción (spec `20261005-140934-promover-todo-produccion`)
+
+Ver `specs/20261005-140934-promover-todo-produccion/contracts/promover-todo-a-produccion.md`
+y `.github/workflows/promover-todo-a-produccion.yml`.
+
+En vez de disparar `migraciones-cloud.yml`, `deploy-infraestructura-vps.yml`
+y `publicar-flows-kestra.yml` por separado, `promover-todo-a-produccion.yml`
+los invoca a los tres de una vía `workflow_call` (cada uno sigue verificando
+su propio staging, sin cambios) y además promueve el frontend (Refine).
+
+- **No requiere ningún secret nuevo** — los 3 jobs reutilizados resuelven
+  los mismos Environments/secrets que ya tenían; el job de Refine solo
+  necesita `permissions: contents: write` para el `git push` de promoción.
+- **Bootstrap de Refine/Vercel (manual, una sola vez, requiere confirmación
+  explícita del usuario — toca un sitio en producción real)**:
+  1. Crear la rama `production` en el repo, apuntando al commit actual de
+     `main`.
+  2. En el proyecto de Vercel, reasignar el dominio de producción a esa
+     rama (`PATCH /v9/projects/{id}/domains/{domain}` con
+     `{"gitBranch": "production"}`, o el equivalente en el dashboard:
+     Project Settings → Domains → el dominio de producción → Git Branch).
+  3. A partir de ahí, `main` deja de desplegar a producción automáticamente
+     — queda como el staging persistente de Refine (ya tiene su propia URL
+     estable `-git-main-...vercel.app`); "promover" pasa a ser el
+     `git push origin main:production` que ya hace el workflow.
+- Los tres workflows individuales siguen funcionando igual por separado
+  (este mecanismo es una conveniencia adicional, no los reemplaza).
+- **Todo mecanismo nuevo con su propio split staging→producción debe
+  sumar su job acá** — ver la regla de extensión en
+  `specs/20261003-105444-cicd-staging-produccion/contracts/workflow-gate.md`.

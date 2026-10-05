@@ -6,6 +6,10 @@ Aplica a los tres workflows nuevos (`migraciones-cloud.yml`, `deploy-infraestruc
 
 **Actualizado otra vez (bug `gate-migraciones-stg-prd`, 2026-10-05)**: la alternativa de arriba dejaba `production` sin ninguna verificación técnica de que `staging` había corrido — documentado como trade-off aceptado (ver "Edge cases" más abajo, ahora corregido). Un caso real lo expuso: un `workflow_dispatch` aplicó 81 migraciones de golpe a producción en un producto derivado, sin que nadie validara feature por feature que ya habían pasado por staging. Hacer público el template desbloqueó required reviewers gratis *ahí*, pero los productos derivados reales son repos privados — esa solución no se traslada. Gate nuevo, sin requisito de plan de pago ni de visibilidad del repo: el primer step de `production`, antes de tocar cualquier secret de producción, corre `scripts/verificar-staging-exitoso.mjs`, que consulta la API de runs de GitHub Actions y exige un run de `staging` con `conclusion: success` para el mismo `head_sha`. Si no existe, el job falla inmediato. Ver `research.md` §6 "Revisión 2".
 
+**Regla de extensión (spec `20261005-140934-promover-todo-produccion`)**: los tres workflows de este contrato ganan el trigger `workflow_call: {}` además de `push`/`workflow_dispatch`, y el job `production` de cada uno acepta `if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'`. Esto habilita `promover-todo-a-produccion.yml` — un punto único de disparo manual que promueve de una los mecanismos de este contrato más Refine/Vercel (ver `specs/20261005-140934-promover-todo-produccion/contracts/promover-todo-a-produccion.md`).
+
+**Todo mecanismo de plataforma nuevo que introduzca su propio split staging→producción DEBE sumar su promoción a `promover-todo-a-produccion.yml`** — vía `workflow_call` si es un workflow de GitHub Actions (siguiendo el patrón de este contrato), o un step/job equivalente si no lo es. No se habilita crear un `workflow_dispatch` de producción nuevo que quede aislado de ese punto único — es la misma regla que ya aplica a `staging`/`production` dentro de este contrato, extendida al punto de disparo compartido.
+
 ## Forma del workflow
 
 ```yaml
@@ -14,6 +18,7 @@ on:
     branches: [main]      # o la rama que corresponda a cada mecanismo
     paths: [<filtro específico del mecanismo>]
   workflow_dispatch: {}
+  workflow_call: {}       # habilita que promover-todo-a-produccion.yml lo invoque
 
 permissions:
   contents: read
@@ -27,7 +32,7 @@ jobs:
     steps: [...]
 
   production:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
     runs-on: [self-hosted, platform-local]
     environment: <mecanismo>-production
     steps:
@@ -46,7 +51,7 @@ jobs:
 
 ## Reglas del contrato
 
-1. `production` **nunca** corre en un push — solo cuando alguien entra a la pestaña Actions y dispara el workflow a mano (`workflow_dispatch`). El filtro `if: github.event_name == 'workflow_dispatch'` en el job (no en `on:`, que es compartido) es lo que separa qué evento corre qué job.
+1. `production` **nunca** corre en un push — solo cuando alguien entra a la pestaña Actions y dispara el workflow a mano (`workflow_dispatch`), o cuando se invoca vía `workflow_call` desde `promover-todo-a-produccion.yml`. El filtro `if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'` en el job (no en `on:`, que es compartido) es lo que separa qué evento corre qué job.
 2. El GitHub Environment de producción (`<mecanismo>-production`) ya no tiene (ni necesita) required reviewers — el gate ya no es solo el acto deliberado de ir a la pestaña Actions y tocar "Run workflow": el primer step de `production` verifica contra la API de GitHub que `staging` corrió exitosamente para ese mismo commit (ver más abajo), así que el riesgo de promover un commit no validado queda cerrado técnicamente, no solo por disciplina del operador. El Environment se sigue creando igual (paso manual único, ver `docs/adoptar-cicd-staging-produccion.md`) porque sigue siendo lo que separa los secrets de staging de los de producción.
 3. `runs-on: [self-hosted, platform-local]` en ambos jobs — nunca `ubuntu-latest` (regla de `CLAUDE.md`).
 4. Los steps de `staging` y `production` son idénticos salvo el valor de `environment` y, por lo tanto, los secrets que resuelven (mismo nombre de secret, distinto valor por Environment).

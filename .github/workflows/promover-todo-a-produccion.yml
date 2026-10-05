@@ -1,0 +1,63 @@
+name: Promover todo a producción
+
+# Punto único de promoción a producción (spec 20261005-140934-promover-
+# todo-produccion). Agrupa en un solo workflow_dispatch los 4 mecanismos
+# de plataforma que hoy tienen split staging→producción: migraciones de
+# Supabase, infraestructura VPS (Kestra/Superset/Nango), flows de Kestra
+# — los tres vía workflow_call, sin duplicar sus steps — y Refine/Vercel.
+#
+# Cada uno de los 3 jobs reutilizados sigue verificando por su cuenta que
+# su staging corrió exitosamente antes de tocar cualquier secret de
+# producción (scripts/verificar-staging-exitoso.mjs, bug
+# gate-migraciones-stg-prd) — este workflow no debilita ni saltea esa
+# verificación, solo agrupa el disparo.
+#
+# Los 4 jobs son independientes entre sí (sin `needs`): si uno falla
+# (p. ej. su staging no corrió para este commit), los demás se promueven
+# igual si su propio staging es válido.
+#
+# Refine/Vercel: no tiene (todavía) un gate técnico como los otros 3 —
+# "promover" es un push explícito main -> production. La rama `production`
+# y la reasignación del dominio de Vercel a esa rama son un bootstrap
+# manual de una sola vez (ver contracts/promover-todo-a-produccion.md),
+# no algo que este workflow automatice.
+#
+# Regla de extensión (FR-007 de la spec): todo mecanismo de plataforma
+# nuevo con su propio split staging→producción debe sumar su job acá —
+# ver specs/20261003-105444-cicd-staging-produccion/contracts/
+# workflow-gate.md para el contrato completo. No se habilita un
+# workflow_dispatch de producción nuevo que quede aislado de este punto
+# único.
+#
+# El OK para disparar este workflow sigue siendo una decisión humana
+# explícita — convención de operación, no un control técnico de GitHub
+# (ver Assumptions de la spec; required reviewers evaluado y descartado,
+# no disponible sin migrar a una Organization con plan de pago).
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  migraciones-cloud:
+    uses: ./.github/workflows/migraciones-cloud.yml
+    secrets: inherit
+
+  deploy-infraestructura-vps:
+    uses: ./.github/workflows/deploy-infraestructura-vps.yml
+    secrets: inherit
+
+  publicar-flows-kestra:
+    uses: ./.github/workflows/publicar-flows-kestra.yml
+    secrets: inherit
+
+  promover-refine:
+    runs-on: [self-hosted, platform-local]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Promover main a production (dominio de Vercel apunta a production)
+        run: git push origin main:production
