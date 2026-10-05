@@ -38,12 +38,21 @@ name: Promover todo a producción
 # explícita — convención de operación, no un control técnico de GitHub
 # (ver Assumptions de la spec; required reviewers evaluado y descartado,
 # no disponible sin migrar a una Organization con plan de pago).
+#
+# permissions.actions:read (bug real, verificado en vivo): un workflow
+# reusable no puede pedir más permisos de los que otorga quien lo llama.
+# Los 3 workflows reutilizados declaran `actions: read` en su propio
+# archivo (lo necesita scripts/verificar-staging-exitoso.mjs) — sin esa
+# misma concesión acá arriba, GitHub rechaza la corrida COMPLETA con
+# startup_failure y 0 jobs, antes de que arranque nada (confirmado: dos
+# corridas reales fallaron así hasta este fix).
 
 on:
   workflow_dispatch: {}
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   migraciones-cloud:
