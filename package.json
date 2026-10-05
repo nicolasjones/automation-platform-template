@@ -39,6 +39,8 @@
     "test:db:validar-aditivas": "node --test scripts/validar-migraciones-aditivas.test.mjs",
     "ci:verificar-staging-exitoso": "node scripts/verificar-staging-exitoso.mjs",
     "test:ci:verificar-staging-exitoso": "node --test scripts/verificar-staging-exitoso.test.mjs",
+    "vercel:promover": "node scripts/promover-deployment-vercel.mjs",
+    "test:vercel:promover": "node --test scripts/promover-deployment-vercel.test.mjs",
     "deploy:vps": "node scripts/deploy-vps.mjs",
     "test:deploy-vps": "node --test scripts/deploy-vps.test.mjs",
     "kestra:render-flow": "node infra/kestra/renderizar-flow.mjs",

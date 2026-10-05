@@ -24,6 +24,10 @@ name: Publicar flows Kestra
 # GitHub Actions y exige un run de `staging` con conclusion=success para
 # el mismo head_sha antes de tocar las credenciales de Kestra de
 # producción. Mismo mecanismo que migraciones-cloud.yml.
+#
+# workflow_call (spec 20261005-140934-promover-todo-produccion): invocable
+# desde promover-todo-a-produccion.yml — ver migraciones-cloud.yml para el
+# detalle de por qué el job `production` acepta ambos eventos.
 
 on:
   push:
@@ -32,6 +36,7 @@ on:
       - "infra/kestra/flows/**"
       - ".github/workflows/publicar-flows-kestra.yml"
   workflow_dispatch: {}
+  workflow_call: {}
 
 permissions:
   contents: read
@@ -66,7 +71,7 @@ jobs:
           done
 
   production:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
     runs-on: [self-hosted, platform-local]
     environment: publicar-flows-kestra-production
     steps:

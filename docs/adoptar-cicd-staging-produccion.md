@@ -132,3 +132,46 @@ pena wirearlo a un workflow de push (fuera del alcance de esta spec).
   Exporta `SUPERSET_URL`/`SUPERSET_USERNAME`/`SUPERSET_PASSWORD` antes de
   correrlo a mano, o inyectalos como secrets si alguna vez se conecta a un
   workflow.
+
+## 6. Botón único de promoción a producción (spec `20261005-140934-promover-todo-produccion`)
+
+Ver `specs/20261005-140934-promover-todo-produccion/contracts/promover-todo-a-produccion.md`
+y `.github/workflows/promover-todo-a-produccion.yml`.
+
+En vez de disparar `migraciones-cloud.yml`, `deploy-infraestructura-vps.yml`
+y `publicar-flows-kestra.yml` por separado, `promover-todo-a-produccion.yml`
+los invoca a los tres de una vía `workflow_call` (cada uno sigue verificando
+su propio staging, sin cambios) y además promueve el frontend (Refine).
+
+- Los 3 jobs reutilizados resuelven los mismos Environments/secrets que ya
+  tenían, sin cambios. El job de Refine sí necesita secrets nuevos:
+  `VERCEL_TOKEN` y `VERCEL_PROJECT_ID`, en un Environment nuevo llamado
+  `promover-todo-a-produccion`.
+- **Bootstrap de Refine/Vercel (manual, una sola vez)**:
+  1. Crear la rama `production` en el repo, apuntando al commit actual de
+     `main`. **Requiere confirmación explícita del usuario** — el
+     clasificador de permisos bloquea este push si lo intenta un agente; se
+     corre con el prefijo `!` desde la sesión del usuario.
+  2. Crear un Access Token de Vercel (idealmente scopeado al proyecto) —
+     **generado y cargado por el usuario directamente, nunca por un
+     agente** — y guardarlo como secret `VERCEL_TOKEN` en el Environment
+     `promover-todo-a-produccion` del repo. Guardar también
+     `VERCEL_PROJECT_ID` (no es secreto; se obtiene de
+     `vercel.com/<scope>/<proyecto>/settings` o de `GET /v9/projects/{id}`).
+  3. No hace falta tocar ninguna configuración de Vercel (dominios,
+     Production Branch, variables de entorno): la promoción se hace por
+     `deployment_id` vía `POST /v10/projects/{id}/promote/{deploymentId}`
+     (`scripts/promover-deployment-vercel.mjs`), que no depende de eso — se
+     evaluó reasignar la "Production Branch" del proyecto y se descartó por
+     no existir un campo de API confiable para eso (ver `research.md` §3 de
+     la spec).
+  4. `main` sigue teniendo su propia URL estable
+     (`-git-main-...vercel.app`) — funciona como el staging persistente de
+     Refine sin que haga falta cambiar nada ahí; "promover" es el
+     `git push origin main:production` + la llamada al script, que ya hace
+     el workflow.
+- Los tres workflows individuales siguen funcionando igual por separado
+  (este mecanismo es una conveniencia adicional, no los reemplaza).
+- **Todo mecanismo nuevo con su propio split staging→producción debe
+  sumar su job acá** — ver la regla de extensión en
+  `specs/20261003-105444-cicd-staging-produccion/contracts/workflow-gate.md`.

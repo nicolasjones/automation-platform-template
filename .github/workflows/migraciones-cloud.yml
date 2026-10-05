@@ -31,6 +31,13 @@ name: Migraciones cloud
 # descartado ahí por costo en repos privados — hacer público el template
 # lo desbloqueó gratis ahí, pero no resuelve el caso real: los productos
 # derivados de este template son privados — ver research.md §6, Revisión 2).
+#
+# workflow_call (spec 20261005-140934-promover-todo-produccion): este
+# workflow puede ser invocado desde promover-todo-a-produccion.yml, el
+# punto único donde se promueven los 4 mecanismos de plataforma de una
+# sola vez. Dentro de esa invocación, github.event_name vale `workflow_call`
+# (no `workflow_dispatch`) — por eso el job `production` acepta ambos
+# eventos. El job `staging` no cambia: sigue disparando solo por `push`.
 
 on:
   push:
@@ -41,6 +48,7 @@ on:
       - "scripts/validar-migraciones-aditivas.mjs"
       - ".github/workflows/migraciones-cloud.yml"
   workflow_dispatch: {}
+  workflow_call: {}
 
 permissions:
   contents: read
@@ -70,7 +78,7 @@ jobs:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
 
   production:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
     runs-on: [self-hosted, platform-local]
     environment: migraciones-cloud-production
     steps:

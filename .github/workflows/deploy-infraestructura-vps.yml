@@ -42,6 +42,10 @@ name: Deploy infraestructura VPS
 # compartido — cada cliente corre su propia instancia dedicada. Tratarlo
 # como compartido chocó en T025 contra una instancia dedicada real ya
 # corriendo en el mismo puerto del VPS de producción.
+#
+# workflow_call (spec 20261005-140934-promover-todo-produccion): invocable
+# desde promover-todo-a-produccion.yml — ver migraciones-cloud.yml para el
+# detalle de por qué el job `production` acepta ambos eventos.
 
 on:
   push:
@@ -53,6 +57,7 @@ on:
       - "scripts/deploy-vps.mjs"
       - ".github/workflows/deploy-infraestructura-vps.yml"
   workflow_dispatch: {}
+  workflow_call: {}
 
 permissions:
   contents: read
@@ -106,7 +111,7 @@ jobs:
           ssh-agent -k || true
 
   production:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
     runs-on: [self-hosted, platform-local]
     environment: deploy-infraestructura-vps-production
     steps:
