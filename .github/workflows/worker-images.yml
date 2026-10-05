@@ -51,6 +51,8 @@ jobs:
           SHA: ${{ github.sha }}
           ACTOR: ${{ github.actor }}
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
@@ -68,6 +70,12 @@ jobs:
           fi
 
           echo "$TOKEN" | docker login "$REGISTRY" -u "$ACTOR" --password-stdin
+          # docker scout necesita una sesión autenticada contra Docker Hub
+          # (no alcanza con el login a ghcr.io de arriba) para poder
+          # escanear — sin esto, "docker scout cves" imprime "Log in with
+          # your Docker ID..." en vez de un reporte, dejando un archivo
+          # vacío que rompe el parseo JSON de validar-scan-worker.mjs.
+          echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           repo_lower=$(echo "$REPOSITORY" | tr '[:upper:]' '[:lower:]')
 
           if ! docker buildx version >/dev/null 2>&1; then
