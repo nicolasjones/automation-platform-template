@@ -17,10 +17,15 @@ name: Promover todo a producción
 # igual si su propio staging es válido.
 #
 # Refine/Vercel: no tiene (todavía) un gate técnico como los otros 3 —
-# "promover" es un push explícito main -> production. La rama `production`
-# y la reasignación del dominio de Vercel a esa rama son un bootstrap
-# manual de una sola vez (ver contracts/promover-todo-a-produccion.md),
-# no algo que este workflow automatice.
+# "promover" es un push explícito main -> production, seguido de
+# scripts/promover-deployment-vercel.mjs, que apunta el tráfico de
+# producción al deployment que Vercel generó para ese push (POST
+# /v10/projects/{id}/promote/{deploymentId} — no rebuildea nada). No se
+# reasigna la "Production Branch" del proyecto: no hay un campo de API
+# confiable para eso (ver research.md §3, revisado), promover por
+# deployment_id es el mecanismo documentado y no depende de esa config.
+# Requiere los secrets VERCEL_TOKEN y VERCEL_PROJECT_ID — creados una sola
+# vez (bootstrap manual, ver contracts/promover-todo-a-produccion.md).
 #
 # Regla de extensión (FR-007 de la spec): todo mecanismo de plataforma
 # nuevo con su propio split staging→producción debe sumar su job acá —
@@ -55,9 +60,22 @@ jobs:
 
   promover-refine:
     runs-on: [self-hosted, platform-local]
+    environment: promover-todo-a-produccion
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Promover main a production (dominio de Vercel apunta a production)
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - name: Promover main a production (push explícito)
         run: git push origin main:production
+      - name: Apuntar producción al deployment de ese push
+        run: pnpm vercel:promover -- --branch production
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

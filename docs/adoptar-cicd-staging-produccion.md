@@ -143,21 +143,33 @@ y `publicar-flows-kestra.yml` por separado, `promover-todo-a-produccion.yml`
 los invoca a los tres de una vía `workflow_call` (cada uno sigue verificando
 su propio staging, sin cambios) y además promueve el frontend (Refine).
 
-- **No requiere ningún secret nuevo** — los 3 jobs reutilizados resuelven
-  los mismos Environments/secrets que ya tenían; el job de Refine solo
-  necesita `permissions: contents: write` para el `git push` de promoción.
-- **Bootstrap de Refine/Vercel (manual, una sola vez, requiere confirmación
-  explícita del usuario — toca un sitio en producción real)**:
+- Los 3 jobs reutilizados resuelven los mismos Environments/secrets que ya
+  tenían, sin cambios. El job de Refine sí necesita secrets nuevos:
+  `VERCEL_TOKEN` y `VERCEL_PROJECT_ID`, en un Environment nuevo llamado
+  `promover-todo-a-produccion`.
+- **Bootstrap de Refine/Vercel (manual, una sola vez)**:
   1. Crear la rama `production` en el repo, apuntando al commit actual de
-     `main`.
-  2. En el proyecto de Vercel, reasignar el dominio de producción a esa
-     rama (`PATCH /v9/projects/{id}/domains/{domain}` con
-     `{"gitBranch": "production"}`, o el equivalente en el dashboard:
-     Project Settings → Domains → el dominio de producción → Git Branch).
-  3. A partir de ahí, `main` deja de desplegar a producción automáticamente
-     — queda como el staging persistente de Refine (ya tiene su propia URL
-     estable `-git-main-...vercel.app`); "promover" pasa a ser el
-     `git push origin main:production` que ya hace el workflow.
+     `main`. **Requiere confirmación explícita del usuario** — el
+     clasificador de permisos bloquea este push si lo intenta un agente; se
+     corre con el prefijo `!` desde la sesión del usuario.
+  2. Crear un Access Token de Vercel (idealmente scopeado al proyecto) —
+     **generado y cargado por el usuario directamente, nunca por un
+     agente** — y guardarlo como secret `VERCEL_TOKEN` en el Environment
+     `promover-todo-a-produccion` del repo. Guardar también
+     `VERCEL_PROJECT_ID` (no es secreto; se obtiene de
+     `vercel.com/<scope>/<proyecto>/settings` o de `GET /v9/projects/{id}`).
+  3. No hace falta tocar ninguna configuración de Vercel (dominios,
+     Production Branch, variables de entorno): la promoción se hace por
+     `deployment_id` vía `POST /v10/projects/{id}/promote/{deploymentId}`
+     (`scripts/promover-deployment-vercel.mjs`), que no depende de eso — se
+     evaluó reasignar la "Production Branch" del proyecto y se descartó por
+     no existir un campo de API confiable para eso (ver `research.md` §3 de
+     la spec).
+  4. `main` sigue teniendo su propia URL estable
+     (`-git-main-...vercel.app`) — funciona como el staging persistente de
+     Refine sin que haga falta cambiar nada ahí; "promover" es el
+     `git push origin main:production` + la llamada al script, que ya hace
+     el workflow.
 - Los tres workflows individuales siguen funcionando igual por separado
   (este mecanismo es una conveniencia adicional, no los reemplaza).
 - **Todo mecanismo nuevo con su propio split staging→producción debe
