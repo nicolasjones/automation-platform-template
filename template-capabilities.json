@@ -133,6 +133,12 @@
       "version": "1.0.1",
       "title": "Búsqueda documental genérica con IA (RAG)",
       "paths": ["supabase/migrations/20261005000000_rag_busqueda_documental.sql", "supabase/tests/database/rag_busqueda_documental.test.sql", "supabase/functions/indexar-documento/index.ts", "supabase/functions/preguntar-documentos/index.ts", "supabase/functions/_shared/embeddings.ts", "apps/web/src/pages/ia/documentos.tsx"]
+    },
+    {
+      "id": "proveedor-elegible-por-capacidad",
+      "version": "1.0.0",
+      "title": "Proveedor elegible por capacidad (default por organización + excepción por cliente)",
+      "paths": ["supabase/migrations/20261005120000_proveedor_elegible_por_capacidad.sql", "supabase/tests/database/proveedor_elegible_por_capacidad.test.sql"]
     }
   ]
 }

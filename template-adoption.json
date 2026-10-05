@@ -24,6 +24,7 @@
     "oauth-connections-nango": { "version": "1.0.0", "status": "adopted" },
     "mcp-server-mechanism": { "version": "1.0.0", "status": "adopted" },
     "chat-companion-mechanism": { "version": "1.0.1", "status": "adopted", "evidence": "1.0.1 (document-rag-mechanism): sin cambio de comportamiento — document-rag-mechanism regeneró supabase/functions/_shared/ia/ y scripts/sincronizar-ia-edge-functions.mjs (artefactos compartidos entre ambas specs) tras rebasear; solo cambió el comentario de cabecera." },
-    "document-rag-mechanism": { "version": "1.0.1", "status": "adopted", "evidence": "1.0.1: bug real encontrado probando en vivo un producto derivado (estudio-contable-automation PR #33) — documentos/versiones_documento sin default en columnas NOT NULL que la UI nunca manda." }
+    "document-rag-mechanism": { "version": "1.0.1", "status": "adopted", "evidence": "1.0.1: bug real encontrado probando en vivo un producto derivado (estudio-contable-automation PR #33) — documentos/versiones_documento sin default en columnas NOT NULL que la UI nunca manda." },
+    "proveedor-elegible-por-capacidad": { "version": "1.0.0", "status": "adopted" }
   }
 }
