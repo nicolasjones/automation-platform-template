@@ -92,6 +92,30 @@ provenance y SBOM" y quedan sin forma de reintentar. Se agregó
 cuanto el runner tenga `buildx` disponible, sin depender de un cambio
 real a `workers/**`.
 
+**Primera corrida real del gate encontró 17 vulnerabilidades reales
+(2026-10-05)**: con buildx, scout, `--format gitlab` y el login a
+Docker Hub ya resueltos (ver `docs/adoptar-runners-locales.md`), el
+gate corrió de verdad por primera vez contra el worker `afip-sdk` y
+bloqueó la publicación — correctamente. Triage:
+
+- **7 de `openssl` de Alpine** (2 CRITICAL + 5 HIGH, fix en
+  `3.5.8-r0`): el dígest pineado de `node:24-alpine` en
+  `workers/Dockerfile` quedó desactualizado apenas se publicó —
+  bastaba bumpearlo a un dígest más reciente de la misma tag mayor.
+- **10 de 5 paquetes npm** (`tar`, `undici`, `ip-address`,
+  `brace-expansion`, `http-cache-semantics`): ninguno es una
+  dependencia real de ningún worker — son el árbol de dependencias
+  que trae empaquetado el propio `npm` dentro de la imagen base de
+  Node (`/usr/local/lib/node_modules/npm`), nunca usado en runtime (el
+  contenedor solo ejecuta `node dist/index.js`, nunca `npm`/`npx`/
+  `corepack`). Se borra `npm`/`npx` de la etapa `runtime` del
+  Dockerfile: 0 vulnerabilidades, 185→41 paquetes, imagen más chica.
+  Mismo fix aplica a todo worker futuro sin tocar nada por worker.
+- De paso, `org.opencontainers.image.vendor` corregido de
+  `Agenmatica` a `nicolasjones` (mismo error de repo canónico ya
+  encontrado antes en `REPO_URL`, ver
+  `feedback_canonico_nicolasjones_no_agenmatica` en memoria).
+
 ## 4. Mapeo de este producto
 
 _(Completar al adoptar: qué tenía este fork de distinto y cómo se
