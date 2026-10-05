@@ -45,7 +45,7 @@
 - [X] T012 Actualizar `template-adoption.json` (auto-adopción del propio template) reflejando las versiones nuevas de T011
 - [X] T013 `pnpm template:capabilities:check --base origin/main` y `pnpm template:adoption:check` en verde
 - [X] T014 `pnpm docs:check` en verde (Principio VII de la constitución)
-- [ ] T015 Correr `code-review` (skill) sobre el diff contra `main` antes de avisar que está listo para mergear (regla del CLAUDE.md del producto, aplicada también acá por consistencia)
+- [X] T015 Correr `code-review` (skill) sobre el diff contra `main` antes de avisar que está listo para mergear (regla del CLAUDE.md del producto, aplicada también acá por consistencia)
 
 ## Dependencies & Execution Order
 
