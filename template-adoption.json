@@ -12,7 +12,7 @@
     "portable-typescript-tooling": { "version": "1.2.4", "status": "adopted" },
     "safe-kestra-flow-publication": { "version": "1.1.0", "status": "adopted" },
     "cloud-migrations-gate": { "version": "1.1.1", "status": "adopted" },
-    "vps-deploy-gate": { "version": "1.0.4", "status": "adopted" },
+    "vps-deploy-gate": { "version": "1.0.5", "status": "adopted", "evidence": "1.0.5 (2026-10-05): infra/runner/Dockerfile gana docker-buildx-plugin y docker scout (tarball pineado por versión, sin paquete apt oficial ni instalador confiable durante el build) — worker-images.yml los exige para provenance/SBOM y bloqueo de vulnerabilidades; encontrado en un fork de producto que ya los necesitaba." },
     "superset-dashboard-import": { "version": "1.0.0", "status": "adopted" },
     "template-capability-sync": { "version": "1.0.2", "status": "adopted", "evidence": "fallback de TEMPLATE_REPOSITORY corregido a nicolasjones/automation-platform-template, repo canónico correcto (2026-10-03)." },
     "embedded-analytics-runtime": { "version": "1.1.0", "status": "adopted" },

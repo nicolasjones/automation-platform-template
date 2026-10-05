@@ -16,7 +16,7 @@
     },
     {
       "id": "vps-deploy-gate",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "title": "CI de deploy de infraestructura del VPS con gate staging-producción",
       "paths": [".github/workflows/deploy-infraestructura-vps.yml", "infra/runner/Dockerfile"]
     },
