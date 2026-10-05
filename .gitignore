@@ -13,6 +13,10 @@ supabase/.branches/
 supabase/.temp/
 supabase/snippets/
 
+# Grafo local de código (Graphify): se regenera con `graphify extract . --code-only`,
+# nunca se commitea.
+graphify-out/
+
 /tmp/
 docs/pdf/
 

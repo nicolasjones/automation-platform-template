@@ -19,6 +19,17 @@ Cargá una skill solo cuando su descripción coincida con el trabajo. No cargues
 
 Consultá el enrutamiento completo y sus límites en [AGENTS.md](../AGENTS.md).
 
+## Grafo de código Graphify (ahorro de tokens)
+
+`graphify-out/graph.json` es el mapa consultable del código (nodos = símbolos, aristas = imports/calls). Generarlo es local y no consume tokens:
+
+```powershell
+uv tool install "graphifyy[sql]"  # una vez por máquina (incluye tree-sitter SQL)
+pnpm grafo:init                    # por clon/worktree: extract + cluster + hooks
+```
+
+Uso: `graphify query "<pregunta>"` (tope 2000 tokens), `graphify path "A" "B"`, `graphify explain "X"`. Preferirlo antes que `grep` masivo o leer archivos completos (ver "## graphify" en [AGENTS.md](../AGENTS.md)). `graphify-out/` nunca se commitea.
+
 ## Disponibilidad por agente
 
 Codex y OpenCode detectan las skills en `.agents/skills`. Claude Code usa las copias equivalentes de `.claude/skills`. OpenCode también recibe los comandos nativos de GitHub Spec Kit en `.opencode/commands`.
