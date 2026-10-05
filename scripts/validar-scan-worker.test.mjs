@@ -31,3 +31,13 @@ test('bloquea una excepción vencida', () => assert.equal(run(finding, [{
   id: 'CVE-FIXTURE', approved_by: 'security@example.test', reference: 'SEC-1',
   justification: 'fixture', expires_at: '2000-01-01T00:00:00Z',
 }]), 1));
+
+// Forma real de --format gitlab (docker scout v1.26.0): severity en
+// "Title Case" y un `id` interno (hash) además del `cve` legible — la
+// excepción se referencia por CVE, no por el hash.
+const gitlabFinding = { vulnerabilities: [{ id: 'hash-interno-no-estable', cve: 'CVE-FIXTURE', severity: 'High' }] };
+test('reconoce severity en Title Case (formato gitlab de docker scout)', () => assert.equal(run(gitlabFinding, []), 1));
+test('la excepción matchea por cve, no por el id interno del reporte gitlab', () => assert.equal(run(gitlabFinding, [{
+  id: 'CVE-FIXTURE', approved_by: 'security@example.test', reference: 'SEC-1',
+  justification: 'fixture', expires_at: '2099-01-01T00:00:00Z',
+}]), 0));

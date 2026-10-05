@@ -1,6 +1,7 @@
 FROM ubuntu:24.04
 
 ARG RUNNER_VERSION=2.337.0
+ARG SCOUT_VERSION=1.26.0
 # El runner de GitHub se niega a correr como root por default; en este
 # contenedor corre como root a propósito para poder usar el socket de
 # Docker montado del host sin pelear con permisos de grupo.
@@ -15,11 +16,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       > /etc/apt/sources.list.d/docker.list \
     && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get update && apt-get install -y --no-install-recommends \
-      docker-ce-cli docker-compose-plugin nodejs \
+      docker-ce-cli docker-compose-plugin docker-buildx-plugin nodejs \
       postgresql-client libtap-parser-sourcehandler-pgtap-perl \
       openssh-client \
     && npm install -g pnpm@11.19.0 \
     && rm -rf /var/lib/apt/lists/*
+# docker-buildx-plugin: worker-images.yml exige provenance y SBOM (docker
+# buildx build --provenance=true --sbom=true), sin él falla en main.
+# docker-scout-plugin no existe como paquete apt del repo oficial de Docker
+# (confirmado 2026-10-05, "E: Unable to locate package"); worker-images.yml
+# también exige `docker scout version` para bloquear vulnerabilidades. El
+# instalador oficial (curl | sh, sin set -e) no deja el binario instalado
+# de forma confiable durante un docker build (probablemente por el límite
+# de tasa de la API de GitHub sin autenticación) sin que el build se entere
+# del fallo — mismo criterio que RUNNER_VERSION arriba: tarball pineado por
+# versión en vez de un script de terceros.
+RUN curl -fsSL -o scout.tar.gz \
+      "https://github.com/docker/scout-cli/releases/download/v${SCOUT_VERSION}/docker-scout_${SCOUT_VERSION}_linux_amd64.tar.gz" \
+    && mkdir -p /root/.docker/cli-plugins \
+    && tar xzf scout.tar.gz -C /root/.docker/cli-plugins docker-scout \
+    && chmod +x /root/.docker/cli-plugins/docker-scout \
+    && rm -f scout.tar.gz
 # openssh-client: el job de deploy de infraestructura del VPS (spec
 # 20261003-105444-cicd-staging-produccion) controla el Docker remoto del VPS
 # vía DOCKER_HOST=ssh://usuario@host — el CLI de Docker delega en el binario

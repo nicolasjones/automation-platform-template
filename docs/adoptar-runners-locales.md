@@ -64,6 +64,31 @@ repo desde este.
    (`Progress: resolved N, reused R, downloaded D`) muestra `downloaded` bajo
    en la primera corrida y `downloaded 0` al re-ejecutarla.
 
+## `buildx` y `docker scout` en la imagen del runner (2026-10-05)
+
+`infra/runner/Dockerfile` no traía ni `docker-buildx-plugin` ni `docker
+scout` — `worker-images.yml` exige ambos (`docker buildx build
+--provenance=true --sbom=true` y `docker scout version` para bloquear
+vulnerabilidades) y fallaba sin ellos. Encontrado en un fork de producto
+al intentar republicar imágenes de workers. `docker-buildx-plugin` se
+instala por apt (repo oficial de Docker, ya configurado en este
+Dockerfile); `docker scout` no tiene paquete apt oficial y su
+instalador (`curl | sh`, sin `set -e`) no deja el binario instalado de
+forma confiable durante un `docker build` sin que el build se entere
+del fallo — se usa un tarball pineado por versión (`SCOUT_VERSION`),
+mismo criterio que ya usa este Dockerfile para `actions-runner`.
+
+**`docker scout cves --format json` ya no existe (2026-10-05)**: con el
+runner ya con `scout` instalado, el escaneo en sí falló — `--format
+json` no es un valor válido en `docker scout` v1.26.0 (imprime la
+ayuda del comando en vez de un error claro, y ese texto rompía el
+parseo de `scripts/validar-scan-worker.mjs`). El gate de
+vulnerabilidades nunca evaluó nada de verdad hasta ahora. Reemplazado
+por `--format gitlab` (JSON real, esquema de GitLab Container
+Scanning) y ajustado el validador: compara `severity` sin distinguir
+mayúsculas (gitlab usa "Title Case") y prioriza el `cve` sobre el `id`
+interno (un hash) del reporte al matchear excepciones.
+
 ## Reversión
 
 Revertir el merge del PR de adopción y recrear los runners (verificando antes
