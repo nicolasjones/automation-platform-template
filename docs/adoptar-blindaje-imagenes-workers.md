@@ -78,6 +78,20 @@ mismo archivo con contenido distinto" si el fork ya tenía su propia versión
   variable de entorno), es un conflicto de contenido real a resolver a
   mano, no automático.
 
+## `workflow_dispatch` en `worker-images.yml` (1.0.4, 2026-10-05)
+
+El workflow solo corría con push a `main` sobre rutas de `workers/**` —
+sin forma de reintentar la publicación sin un commit real a esas rutas.
+Encontrado en un fork de producto: el runner se queda sin `buildx`
+disponible en la ventana entre que se mergea un fix al Dockerfile del
+runner (por ejemplo, agregar `docker-buildx-plugin`) y que la imagen
+real del runner se reconstruye con ese cambio — las corridas por push
+en esa ventana fallan con "BuildKit/buildx es obligatorio para
+provenance y SBOM" y quedan sin forma de reintentar. Se agregó
+`workflow_dispatch: {}` al trigger para poder republicar manualmente en
+cuanto el runner tenga `buildx` disponible, sin depender de un cambio
+real a `workers/**`.
+
 ## 4. Mapeo de este producto
 
 _(Completar al adoptar: qué tenía este fork de distinto y cómo se
