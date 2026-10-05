@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write   # necesario para el push explícito main -> production (job refine)
+  actions: read     # los 3 workflows reutilizados lo requieren (verificar-staging-exitoso.mjs) — sin otorgarlo acá, GitHub rechaza la corrida completa (startup_failure, 0 jobs)
 
 jobs:
   migraciones-cloud:
