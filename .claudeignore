@@ -1,0 +1,24 @@
+# Archivos que Claude Code / Codex / OpenCode no necesitan leer.
+# Ahorra tokens evitando ruido (equivalente a .gitignore para agentes).
+node_modules/
+.pnpm-store/
+dist/
+coverage/
+*.tsbuildinfo
+.supabase/
+supabase/.branches/
+supabase/.temp/
+supabase/snippets/
+
+# Generados (se regeneran con pnpm, no aportan contexto)
+docs/schema.html
+docs/pdf/
+
+# Lockfiles y artefactos pesados
+pnpm-lock.yaml
+*.log
+
+# Estado local de agentes/IDE (ver .gitignore)
+.claude/settings.local.json
+.codex/
+graphify-out/

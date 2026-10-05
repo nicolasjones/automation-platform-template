@@ -1,0 +1,5 @@
+# Exclusiones extra de Graphify (se suma a .gitignore, nunca re-incluye).
+# Generados y binarios que no aportan al grafo de código.
+docs/schema.html
+docs/pdf/
+*.pdf
