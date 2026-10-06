@@ -22,7 +22,7 @@
     },
     {
       "id": "worker-execution-cycle",
-      "version": "1.3.0",
+      "version": "1.3.1",
       "title": "Ciclo auditable de ejecuciones de workers",
       "paths": ["supabase/migrations/20260920000000_ciclo_ejecuciones_workers.sql", "supabase/migrations/20260923120000_detalle_inicio_ejecucion.sql", "workers/CONTRATO.md", "infra/kestra/flows/plantilla-generico.yml", "infra/kestra/flows/plantilla-dedicado.yml", "infra/kestra/flows/limpieza-evidencia.yml", "supabase/migrations/20260925200000_ejecucion_en_curso_worker.sql", "supabase/migrations/20260925210000_destrabar_conexion_invalida.sql"]
     },

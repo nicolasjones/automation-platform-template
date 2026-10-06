@@ -23,6 +23,18 @@ Si la credencial es inválida, stderr solo contiene
 `CREDENCIAL_INVALIDA:<conexion_id>`. Los demás errores se sanitizan y no deben
 incluir tokens, cookies, archivos ni secretos.
 
+## Normalización de datos
+
+Todo valor numérico o de fecha que un worker extrae de un sistema externo se
+convierte a su tipo real antes de guardarlo (`numeric` para montos, parseando
+el formato local del sistema de origen a un número; `date`/`timestamptz` para
+fechas) — nunca queda como texto crudo tal como vino del scraping o de la
+respuesta de una API, salvo en un campo `datos_originales` dedicado a
+conservar la fuente sin tocar. Un monto guardado como texto ("1.234,56") no se
+puede sumar, filtrar ni cruzar contra otra tabla; guardado como número sí —
+esta regla existe para que los datos que trae un worker se puedan reportar y
+cruzar más adelante, no solo mostrarse tal cual.
+
 ## Códigos de salida y reintentos
 
 | Código | Significado | ¿El flow reintenta? |
