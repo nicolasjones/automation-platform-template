@@ -183,6 +183,17 @@ haber adoptado la 1.2.0 (fallas no reintentables): cada camino de abajo es un
 4. **Validar** con una ejecución real equivalente a
    `pnpm test:kestra:conexion-trabada:e2e`.
 
+## 3.5 Normalización de datos (`worker-execution-cycle` 1.3.1)
+
+Solo documentación — no hay migración ni cambio de contrato de ejecución,
+agrega la sección "Normalización de datos" a `workers/CONTRATO.md`. Regla:
+todo monto o fecha que un worker extrae de un sistema externo se convierte a
+su tipo real (`numeric`/`date`) antes de guardarlo, nunca texto crudo salvo
+en un campo `datos_originales` dedicado a conservar la fuente. Nada que
+migrar para adoptarla — si algún conector existente todavía guarda un monto
+como texto en una columna de primera clase (no en `datos_originales`), es
+candidato a corregir cuando se lo toque, no una migración urgente.
+
 ## 4. Mapeo de este producto
 
 ### Versión de outbox adoptable
