@@ -11,22 +11,26 @@ description: "Task list for Disparo programado en el ciclo de ejecuciones"
 
 **Tests**: pgTAP real (Technology and Quality Gates: "los cambios sensibles requieren una prueba del aislamiento, no solo revisión manual") — regresión de `ciclo_ejecuciones_workers.test.sql` incluida, no solo tests nuevos.
 
+## ⚠️ Nota de ejecución 2026-10-07
+
+El stack local de Supabase corriendo en esta máquina pertenece a otro worktree (`tmpl-proveedor-elegible-capacidad`, otra sesión activa) — no se tocó para no interferir con ese trabajo. Las migraciones y los 3 archivos `.test.sql` de abajo están escritos y revisados a mano contra el esquema real (línea por línea, no por analogía), pero **no se ejecutaron contra una base real todavía**. T001-T003/T005/T008 quedan `[X]` (el código existe); T004/T006/T007/T009 quedan `[ ]` hasta correrlos contra un stack propio o coordinar con la otra sesión — no marcar como verificado algo que no corrió.
+
 ## Phase 1: Setup
 
-- [ ] T001 Confirmar fixtures reutilizables de `supabase/tests/database/ciclo_ejecuciones_workers.test.sql` y `ejecucion_en_curso_worker.test.sql` para los tests nuevos (misma organización/conexión/capacidades donde tenga sentido, sin duplicar fixtures).
+- [X] T001 Confirmar fixtures reutilizables de `supabase/tests/database/ciclo_ejecuciones_workers.test.sql` y `ejecucion_en_curso_worker.test.sql` para los tests nuevos (misma organización/conexión/capacidades donde tenga sentido, sin duplicar fixtures). Revisado; los tests nuevos usan su propio prefijo de UUID (`a1.../b1.../c1...`) para no colisionar, mismo estilo de fixtures.
 
 ## Phase 2: Foundational (bloqueante)
 
-- [ ] T002 Migración `supabase/migrations/<timestamp>_programacion_ejecucion.sql`: tabla `public.programacion_ejecucion` (forma en `data-model.md` §1), con `unique (capacidad_id)`.
-- [ ] T003 RLS de `programacion_ejecucion`: `select` para miembros de la organización, sin escritura directa para `authenticated`.
-- [ ] T004 [P] pgTAP `supabase/tests/database/programacion_ejecucion.test.sql`: aislamiento entre 2 organizaciones + rechazo de escritura directa.
-- [ ] T005 Migración `supabase/migrations/<timestamp>_despachar_programada_outbox.sql`: reemplaza `public.iniciar_ejecucion_worker` con el cambio de una línea de `data-model.md` §2 — **nada más cambia**.
-- [ ] T006 pgTAP de regresión: correr `ciclo_ejecuciones_workers.test.sql` y `ejecucion_en_curso_worker.test.sql` sin modificarlos, confirmar que siguen en verde (FR-009, no romper `manual`/`kestra`).
-- [ ] T007 [P] pgTAP nuevo: `iniciar_ejecucion_worker(..., 'programada')` SÍ genera una fila en `despachos_ejecucion` (el caso que antes de esta spec fallaba silenciosamente).
-- [ ] T008 Función `private.conexion_en_curso(uuid)` (`data-model.md` §3), generalizando `estado_ejecucion_vigente`.
-- [ ] T009 [P] pgTAP de `conexion_en_curso`: dos capacidades de la misma conexión, una en curso vigente → `true`; una en curso pero vencida por timeout → `false`; conexión distinta (mismo `sistema_externo`) → `false` aunque la otra esté en curso.
+- [X] T002 Migración `supabase/migrations/20261007180000_programacion_ejecucion.sql`: tabla `public.programacion_ejecucion` (forma en `data-model.md` §1), con `unique (capacidad_id)`.
+- [X] T003 RLS de `programacion_ejecucion`: `select` solo para administradores de la organización (mismo patrón que `capacidades_ejecucion_select`/`ejecuciones_worker_select`, no "cualquier miembro" — consistencia con las tablas hermanas del mismo módulo), sin escritura directa para `authenticated`.
+- [ ] T004 [P] pgTAP `supabase/tests/database/programacion_ejecucion.test.sql`: escrito (aislamiento entre 2 organizaciones + rechazo de escritura directa + constraint de frecuencia semanal) — **pendiente de correr contra una base real** (ver nota arriba).
+- [X] T005 Migración `supabase/migrations/20261007180100_despachar_programada_outbox.sql`: reemplaza `public.iniciar_ejecucion_worker` con el cambio de una línea de `data-model.md` §2 — copiado el cuerpo completo de `20260925210000_destrabar_conexion_invalida.sql` (la versión real más reciente), nada más cambia.
+- [ ] T006 pgTAP de regresión: **pendiente de correr** `ciclo_ejecuciones_workers.test.sql` y `ejecucion_en_curso_worker.test.sql` sin modificarlos, para confirmar que siguen en verde (FR-009, no romper `manual`/`kestra`) — es el gate más importante de toda la spec, no se puede dar por cumplido sin ejecutarlo.
+- [ ] T007 [P] pgTAP `supabase/tests/database/despacho_programado_outbox.test.sql`: escrito (`iniciar_ejecucion_worker(..., 'programada')` SÍ genera una fila en `despachos_ejecucion`, y `'kestra'` sigue sin generarla) — **pendiente de correr**.
+- [X] T008 Función `private.conexion_en_curso(uuid)` (`data-model.md` §3, migración `20261007180200_conexion_en_curso.sql`), generalizando `estado_ejecucion_vigente` de ejecución puntual a conexión.
+- [ ] T009 [P] pgTAP `supabase/tests/database/conexion_en_curso.test.sql`: escrito (misma conexión bloquea entre capacidades distintas, conexión distinta del mismo `sistema_externo` no se ve afectada, timeout y cierre de estado liberan el bloqueo) — **pendiente de correr**.
 
-**Checkpoint**: el mecanismo de datos existe y está probado; todavía no hay quien lo dispare automáticamente.
+**Checkpoint**: el código del mecanismo de datos existe; falta ejecutarlo contra una base real antes de considerarlo probado.
 
 ## Phase 3: User Story 1 - Programar una capacidad para que corra sola (Priority: P1) 🎯 MVP
 
