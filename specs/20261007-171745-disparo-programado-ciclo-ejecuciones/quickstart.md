@@ -10,7 +10,7 @@ Necesitás al menos una organización con una conexión activa y una capacidad h
 
 ## Escenario 1 — Programar y que corra sola (US1)
 
-1. `select public.programar_capacidad_ejecucion(p_capacidad_id, 'diaria', null, null, '06:00', current_date)` como administrador de la organización.
+1. `select public.programar_capacidad_ejecucion(p_capacidad_id, 'diaria', '06:00', current_date)` como administrador de la organización.
 2. Disparar manualmente el flow `despachador-programado` desde Kestra (sin esperar al cron, para la prueba).
 3. Confirmar: una fila nueva en `ejecuciones_worker` con `origen = 'programada'`, Y una fila nueva en `despachos_ejecucion` con `estado = 'pendiente'` (la parte que antes del fix de `research.md` #1 NO se generaba).
 4. Confirmar que `plantilla-generico.yml`/`plantilla-dedicado.yml` (o cualquier flow de producto que ya use `private.reclamar_despachos_ejecucion`) la reclama sin ningún cambio de su parte.

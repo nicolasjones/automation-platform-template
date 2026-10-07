@@ -43,7 +43,7 @@ select set_config(
 set local role authenticated;
 
 select throws_ok(
-  $$select programar_capacidad_ejecucion('d1111111-1111-1111-1111-111111111113', 'diaria', null, null, '06:00', current_date)$$,
+  $$select programar_capacidad_ejecucion('d1111111-1111-1111-1111-111111111113', 'diaria', '06:00', current_date)$$,
   'P0001',
   'NO_AUTORIZADO: se requiere ser administrador de la organización',
   'un miembro no administrador no puede programar'
@@ -70,7 +70,7 @@ select set_config(
 set local role authenticated;
 
 select throws_ok(
-  $$select programar_capacidad_ejecucion('d1111111-1111-1111-1111-111111111113', 'diaria', null, null, '06:00', current_date)$$,
+  $$select programar_capacidad_ejecucion('d1111111-1111-1111-1111-111111111113', 'diaria', '06:00', current_date)$$,
   'P0001',
   'NO_AUTORIZADO: se requiere ser administrador de la organización',
   'el administrador de otra organización no puede programar una capacidad ajena'
@@ -90,7 +90,7 @@ select set_config(
 set local role authenticated;
 
 select lives_ok(
-  $$select programar_capacidad_ejecucion('d1111111-1111-1111-1111-111111111113', 'diaria', null, null, '06:00', current_date)$$,
+  $$select programar_capacidad_ejecucion('d1111111-1111-1111-1111-111111111113', 'diaria', '06:00', current_date)$$,
   'el administrador dueño programa su capacidad'
 );
 
@@ -101,7 +101,7 @@ select is(
 );
 
 select throws_ok(
-  $$select programar_capacidad_ejecucion('00000000-0000-0000-0000-000000000000', 'diaria', null, null, '06:00', current_date)$$,
+  $$select programar_capacidad_ejecucion('00000000-0000-0000-0000-000000000000', 'diaria', '06:00', current_date)$$,
   'P0001',
   'CAPACIDAD_DESCONOCIDA: 00000000-0000-0000-0000-000000000000',
   'una capacidad inexistente se rechaza con un error claro'

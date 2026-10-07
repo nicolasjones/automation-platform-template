@@ -4,7 +4,7 @@
 
 | RPC | Firma | Notas |
 |---|---|---|
-| `public.programar_capacidad_ejecucion` | `(p_capacidad_id uuid, p_frecuencia text, p_dia_semana smallint default null, p_dia_mes smallint default null, p_hora time, p_desde date, p_hasta date default null)` | Upsert en `programacion_ejecucion` (`unique (capacidad_id)`). Rechaza si `capacidad_id` no pertenece a la organización del rol actual. |
+| `public.programar_capacidad_ejecucion` | `(p_capacidad_id uuid, p_frecuencia text, p_hora time, p_desde date, p_dia_semana smallint default null, p_dia_mes smallint default null, p_hasta date default null)` | Upsert en `programacion_ejecucion` (`unique (capacidad_id)`). Rechaza si `capacidad_id` no pertenece a la organización del rol actual. Orden de parámetros: los obligatorios (`hora`/`desde`) antes de los opcionales -- Postgres exige que ningún parámetro sin default venga después de uno con default. |
 | `public.quitar_programacion_capacidad` | `(p_capacidad_id uuid)` | Delete de la fila. |
 | `public.listar_programaciones_de_organizacion` | — (lee `private.organizacion_del_rol_actual()`) | Devuelve cada programación con su capacidad, incluido si está vencida (`hasta < hoy`, de solo lectura, sin columna de estado nueva). |
 

@@ -9,16 +9,21 @@
 --   drop function public.listar_programaciones_de_organizacion();
 --   revoke execute on function public.quitar_programacion_capacidad(uuid) from authenticated;
 --   drop function public.quitar_programacion_capacidad(uuid);
---   revoke execute on function public.programar_capacidad_ejecucion(uuid, text, smallint, smallint, time, date, date) from authenticated;
---   drop function public.programar_capacidad_ejecucion(uuid, text, smallint, smallint, time, date, date);
+--   revoke execute on function public.programar_capacidad_ejecucion(uuid, text, time, date, smallint, smallint, date) from authenticated;
+--   drop function public.programar_capacidad_ejecucion(uuid, text, time, date, smallint, smallint, date);
 
+-- Postgres exige que los parámetros sin default no vengan después de uno
+-- con default: p_hora/p_desde (obligatorios) van antes de
+-- p_dia_semana/p_dia_mes/p_hasta (opcionales), no en el orden de
+-- data-model.md §contracts (bug real, atrapado por CI -- "input
+-- parameters after one with a default value must also have defaults").
 create or replace function public.programar_capacidad_ejecucion(
   p_capacidad_id uuid,
   p_frecuencia text,
-  p_dia_semana smallint default null,
-  p_dia_mes smallint default null,
   p_hora time,
   p_desde date,
+  p_dia_semana smallint default null,
+  p_dia_mes smallint default null,
   p_hasta date default null
 )
 returns uuid
@@ -64,11 +69,11 @@ begin
 end;
 $$;
 
-comment on function public.programar_capacidad_ejecucion(uuid, text, smallint, smallint, time, date, date) is
+comment on function public.programar_capacidad_ejecucion(uuid, text, time, date, smallint, smallint, date) is
   'Contrato: specs/20261007-171745-disparo-programado-ciclo-ejecuciones/contracts/rpc.md. Upsert por capacidad_id (a lo sumo una programación activa, FR-001); exige administrador de la organización dueña de la capacidad.';
 
-revoke execute on function public.programar_capacidad_ejecucion(uuid, text, smallint, smallint, time, date, date) from public;
-grant execute on function public.programar_capacidad_ejecucion(uuid, text, smallint, smallint, time, date, date) to authenticated;
+revoke execute on function public.programar_capacidad_ejecucion(uuid, text, time, date, smallint, smallint, date) from public;
+grant execute on function public.programar_capacidad_ejecucion(uuid, text, time, date, smallint, smallint, date) to authenticated;
 
 create or replace function public.quitar_programacion_capacidad(p_capacidad_id uuid)
 returns void
