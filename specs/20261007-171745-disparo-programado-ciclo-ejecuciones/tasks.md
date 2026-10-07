@@ -61,7 +61,7 @@ El stack local de Supabase de esta máquina pertenece a otro worktree (otra sesi
 - [ ] T020 Actualizar `specs/016-ciclo-ejecuciones-workers/contracts/ciclo-ejecuciones.md` (tabla de orígenes: `'programada'` ahora genera orden) — Principio VII, el contrato original no puede quedar desactualizado.
 - [ ] T021 Bump de `worker-execution-cycle` en `template-capabilities.json` (paths nuevos: la migración de `programacion_ejecucion`, el flow despachador) y evidencia verbosa en `template-adoption.json` si este repo también la consume (verificar el campo `version` real, no solo el texto — regla de proyecto).
 - [ ] T022 `pnpm docs:check` / documentación equivalente del cambio (Principio VII) — este archivo de tasks + los artefactos de `specs/` ya cumplen, confirmar que no falta nada en `docs/` si existiera una guía general del ciclo de ejecuciones.
-- [ ] T023 Code-review del diff completo contra `main` antes de pedir el cierre del PR (regla de proyecto).
+- [X] T023 Code-review del diff completo contra `main` (regla de proyecto). Hallazgo real corregido: `private.capacidades_programadas_debidas()` no filtraba por `capacidades_ejecucion.habilitada`/`conexiones.estado = 'activa'` — sin eso, una capacidad deshabilitada o con credencial inválida quedaría "debida" para siempre (nunca llega a `marcar_programacion_disparada` porque `iniciar_ejecucion_worker` la rechaza antes), generando ruido cada ciclo del despachador. No era un bug de corrección (el disparo real ya estaba bien rechazado), sí de limpieza operativa — corregido con su propio pgTAP (`capacidades_programadas_debidas.test.sql`), verde en CI.
 
 ## Dependencies & Execution Order
 
