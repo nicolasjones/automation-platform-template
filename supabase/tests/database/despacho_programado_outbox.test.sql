@@ -51,7 +51,7 @@ select is(
 );
 
 select is(
-  (select estado from despachos_ejecucion d
+  (select d.estado from despachos_ejecucion d
     join ejecuciones_worker e on e.id = d.ejecucion_id
     where e.capacidad_id = 'b1111111-1111-1111-1111-111111111113'),
   'pendiente',
