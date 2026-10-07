@@ -66,6 +66,7 @@
     "test:kestra:reintentos": "node --test infra/kestra/validar-reintentos-flows.test.mjs",
     "test:kestra:reintentos:e2e": "node infra/kestra/validar-reintentos-e2e.mjs",
     "test:kestra:conexion-trabada:e2e": "node infra/kestra/validar-conexion-trabada-e2e.mjs",
+    "test:kestra:despachador-programado": "node --test infra/kestra/validar-despachador-programado.test.mjs",
     "test:ia:aprovisionamiento": "node --test infra/ia/aprovisionar-proveedores.test.mjs",
     "test:tooling": "node --test scripts/operaciones.test.mjs scripts/supabase-ci.test.mjs",
     "test:kestra:deploy-flow": "node --test infra/kestra/desplegar-flow.test.mjs infra/kestra/sincronizar-rol-orquestacion.test.mjs",
