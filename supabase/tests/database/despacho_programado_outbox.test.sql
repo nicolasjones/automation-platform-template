@@ -13,6 +13,9 @@ select plan(5);
 insert into organizaciones (id, nombre) values
   ('b1111111-1111-1111-1111-111111111111', 'Organización despacho programado');
 
+insert into auth.users (id, email) values
+  ('b1000000-0000-0000-0000-000000000001', 'admin-despacho-programado@example.com');
+
 insert into usuarios_organizacion (user_id, organizacion_id, rol_id) values
   ('b1000000-0000-0000-0000-000000000001', 'b1111111-1111-1111-1111-111111111111', 'administrador');
 

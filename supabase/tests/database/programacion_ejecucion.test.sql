@@ -11,6 +11,10 @@ insert into organizaciones (id, nombre) values
   ('a1111111-1111-1111-1111-111111111111', 'Organización A (programación)'),
   ('a2222222-2222-2222-2222-222222222222', 'Organización B (programación)');
 
+insert into auth.users (id, email) values
+  ('a1000000-0000-0000-0000-000000000001', 'admin-a-programacion@example.com'),
+  ('a2000000-0000-0000-0000-000000000001', 'admin-b-programacion@example.com');
+
 insert into usuarios_organizacion (user_id, organizacion_id, rol_id) values
   ('a1000000-0000-0000-0000-000000000001', 'a1111111-1111-1111-1111-111111111111', 'administrador'),
   ('a2000000-0000-0000-0000-000000000001', 'a2222222-2222-2222-2222-222222222222', 'administrador');
