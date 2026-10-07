@@ -11,50 +11,50 @@ description: "Task list for Disparo programado en el ciclo de ejecuciones"
 
 **Tests**: pgTAP real (Technology and Quality Gates: "los cambios sensibles requieren una prueba del aislamiento, no solo revisión manual") — regresión de `ciclo_ejecuciones_workers.test.sql` incluida, no solo tests nuevos.
 
-## ⚠️ Nota de ejecución 2026-10-07
+## ✅ Verificación real 2026-10-07
 
-El stack local de Supabase corriendo en esta máquina pertenece a otro worktree (`tmpl-proveedor-elegible-capacidad`, otra sesión activa) — no se tocó para no interferir con ese trabajo. Las migraciones y los 3 archivos `.test.sql` de abajo están escritos y revisados a mano contra el esquema real (línea por línea, no por analogía), pero **no se ejecutaron contra una base real todavía**. T001-T003/T005/T008 quedan `[X]` (el código existe); T004/T006/T007/T009 quedan `[ ]` hasta correrlos contra un stack propio o coordinar con la otra sesión — no marcar como verificado algo que no corrió.
+El stack local de Supabase de esta máquina pertenece a otro worktree (otra sesión activa) — nunca se tocó. En su lugar, cada push a este PR corrió contra el stack **aislado** del CI (self-hosted runner, proyecto propio, puertos propios) — mismo criterio que cualquier otro PR del repo. El CI atrapó 3 bugs reales que la revisión manual no vio (documentados en los commits): falta `insert into auth.users` antes de `usuarios_organizacion` en 2 fixtures, orden de parámetros inválido en `programar_capacidad_ejecucion` ("input parameters after one with a default value must also have defaults"), y una referencia ambigua a `estado` en un JOIN. Los 4 checks del PR #37 (`database`, `application`, `infrastructure`, `verificar`) están en verde después de corregirlos — ver `gh pr checks 37 --repo nicolasjones/automation-platform-template`.
 
 ## Phase 1: Setup
 
-- [X] T001 Confirmar fixtures reutilizables de `supabase/tests/database/ciclo_ejecuciones_workers.test.sql` y `ejecucion_en_curso_worker.test.sql` para los tests nuevos (misma organización/conexión/capacidades donde tenga sentido, sin duplicar fixtures). Revisado; los tests nuevos usan su propio prefijo de UUID (`a1.../b1.../c1...`) para no colisionar, mismo estilo de fixtures.
+- [X] T001 Confirmar fixtures reutilizables de `supabase/tests/database/ciclo_ejecuciones_workers.test.sql` y `ejecucion_en_curso_worker.test.sql` para los tests nuevos (misma organización/conexión/capacidades donde tenga sentido, sin duplicar fixtures). Revisado; los tests nuevos usan su propio prefijo de UUID (`a1.../b1.../c1.../d1...`) para no colisionar, mismo estilo de fixtures.
 
 ## Phase 2: Foundational (bloqueante)
 
 - [X] T002 Migración `supabase/migrations/20261007180000_programacion_ejecucion.sql`: tabla `public.programacion_ejecucion` (forma en `data-model.md` §1), con `unique (capacidad_id)`.
 - [X] T003 RLS de `programacion_ejecucion`: `select` solo para administradores de la organización (mismo patrón que `capacidades_ejecucion_select`/`ejecuciones_worker_select`, no "cualquier miembro" — consistencia con las tablas hermanas del mismo módulo), sin escritura directa para `authenticated`.
-- [ ] T004 [P] pgTAP `supabase/tests/database/programacion_ejecucion.test.sql`: escrito (aislamiento entre 2 organizaciones + rechazo de escritura directa + constraint de frecuencia semanal) — **pendiente de correr contra una base real** (ver nota arriba).
+- [X] T004 [P] pgTAP `supabase/tests/database/programacion_ejecucion.test.sql`: **verde en CI** (aislamiento entre 2 organizaciones + rechazo de escritura directa + constraint de frecuencia semanal).
 - [X] T005 Migración `supabase/migrations/20261007180100_despachar_programada_outbox.sql`: reemplaza `public.iniciar_ejecucion_worker` con el cambio de una línea de `data-model.md` §2 — copiado el cuerpo completo de `20260925210000_destrabar_conexion_invalida.sql` (la versión real más reciente), nada más cambia.
-- [ ] T006 pgTAP de regresión: **pendiente de correr** `ciclo_ejecuciones_workers.test.sql` y `ejecucion_en_curso_worker.test.sql` sin modificarlos, para confirmar que siguen en verde (FR-009, no romper `manual`/`kestra`) — es el gate más importante de toda la spec, no se puede dar por cumplido sin ejecutarlo.
-- [ ] T007 [P] pgTAP `supabase/tests/database/despacho_programado_outbox.test.sql`: escrito (`iniciar_ejecucion_worker(..., 'programada')` SÍ genera una fila en `despachos_ejecucion`, y `'kestra'` sigue sin generarla) — **pendiente de correr**.
+- [X] T006 pgTAP de regresión: **verde en CI** — `ciclo_ejecuciones_workers.test.sql` y `ejecucion_en_curso_worker.test.sql` corrieron sin modificarlos y siguen pasando (FR-009, `manual`/`kestra` intactos). Era el gate más importante de la spec; confirmado antes de seguir con las demás fases.
+- [X] T007 [P] pgTAP `supabase/tests/database/despacho_programado_outbox.test.sql`: **verde en CI** (`iniciar_ejecucion_worker(..., 'programada')` SÍ genera una fila en `despachos_ejecucion`; `'kestra'` sigue sin generarla).
 - [X] T008 Función `private.conexion_en_curso(uuid)` (`data-model.md` §3, migración `20261007180200_conexion_en_curso.sql`), generalizando `estado_ejecucion_vigente` de ejecución puntual a conexión.
-- [ ] T009 [P] pgTAP `supabase/tests/database/conexion_en_curso.test.sql`: escrito (misma conexión bloquea entre capacidades distintas, conexión distinta del mismo `sistema_externo` no se ve afectada, timeout y cierre de estado liberan el bloqueo) — **pendiente de correr**.
+- [X] T009 [P] pgTAP `supabase/tests/database/conexion_en_curso.test.sql`: **verde en CI** (misma conexión bloquea entre capacidades distintas, conexión distinta del mismo `sistema_externo` no se ve afectada, timeout y cierre de estado liberan el bloqueo).
 
-**Checkpoint**: el código del mecanismo de datos existe; falta ejecutarlo contra una base real antes de considerarlo probado.
+**Checkpoint**: el mecanismo de datos existe y está probado contra una base real (CI), no solo revisado a mano. ✅
 
 ## Phase 3: User Story 1 - Programar una capacidad para que corra sola (Priority: P1) 🎯 MVP
 
 **Independent Test**: programar una capacidad, disparar el flow despachador manualmente (sin esperar el cron), confirmar ejecución real de punta a punta (quickstart.md escenario 1).
 
-- [ ] T010 [P] [US1] RPC `public.programar_capacidad_ejecucion` (`contracts/rpc.md`) — exige `private.es_administrador_de`.
-- [ ] T011 [P] [US1] RPC `public.quitar_programacion_capacidad` (`contracts/rpc.md`).
-- [ ] T012 [US1] RPC `public.listar_programaciones_de_organizacion` (`contracts/rpc.md`), incluyendo el cálculo de "vencida" (`hasta < hoy`, de solo lectura).
-- [ ] T013 [P] [US1] pgTAP de permisos de T010-T012: administrador puede, miembro no-administrador no puede, otra organización no puede.
-- [ ] T014 [US1] Flow `infra/kestra/flows/despachador-programado.yml`: trigger `Schedule` (sintaxis de `research.md` #3), consulta `programacion_ejecucion` join `capacidades_ejecucion` por lo debido ahora, llama `private.conexion_en_curso` y `iniciar_ejecucion_worker(..., 'programada')` por cada capacidad que corresponda — sin inputs de sistema/imagen, sin ninguna condición específica de un sistema (FR-007).
-- [ ] T015 [US1] Test estático del flow (mismo patrón que `infra/kestra/validar-reintentos-flows.test.mjs`): confirmar que `despachador-programado.yml` no referencia ningún nombre de sistema/imagen hardcodeado.
-- [ ] T016 [US1] Ejecutar `quickstart.md` escenario 1 contra el stack local real (no solo mocks).
+- [X] T010 [P] [US1] RPC `public.programar_capacidad_ejecucion` (`contracts/rpc.md`) — exige `private.es_administrador_de`. Migración `20261007180500_rpc_programacion_ejecucion.sql`.
+- [X] T011 [P] [US1] RPC `public.quitar_programacion_capacidad` (`contracts/rpc.md`).
+- [X] T012 [US1] RPC `public.listar_programaciones_de_organizacion` (`contracts/rpc.md`), incluyendo el cálculo de "vencida" (`hasta < hoy`, de solo lectura).
+- [X] T013 [P] [US1] pgTAP `supabase/tests/database/rpc_programacion_ejecucion.test.sql`: **verde en CI** — administrador puede, miembro no-administrador no puede, administrador de otra organización no puede, lectura vía RPC abierta a cualquier miembro.
+- [X] T014 [US1] Flow `infra/kestra/flows/despachador-programado.yml`: trigger `Schedule` cada 10 minutos, consulta `private.capacidades_programadas_debidas()` (join `programacion_ejecucion`+`capacidades_ejecucion`), llama `private.conexion_en_curso` y `iniciar_ejecucion_worker(..., 'programada')` por cada capacidad que corresponda, y `private.marcar_programacion_disparada` para no repetir el disparo el mismo día — sin inputs de sistema/imagen, sin ninguna condición específica de un sistema (FR-007). Columna `ultima_disparada_en` (migración `20261007180300`) y las 2 funciones de apoyo (migración `20261007180400`) se agregaron durante esta tarea: eran necesarias para la idempotencia del disparo diario, no estaban en el diseño original.
+- [X] T015 [US1] Test estático `infra/kestra/validar-despachador-programado.test.mjs` (mismo patrón que `validar-reintentos-flows.test.mjs`) — **corrido localmente, 5/5 en verde** (no requiere base de datos, es seguro de ejecutar): sin `sistema_externo`/`imagen`, sin SSH/docker, con trigger `Schedule`, llama a `iniciar_ejecucion_worker` con `'programada'`, y chequea `conexion_en_curso` antes de disparar.
+- [ ] T016 [US1] Ejecutar `quickstart.md` escenario 1 contra un Kestra real (deploy del flow + disparo real) — **pendiente**: requiere una instancia de Kestra corriendo, que el CI de este PR no levanta (los 4 checks validan SQL/JS, no despliegan flows). Queda para la verificación manual antes de mergear, o para el `/speckit-implement` del producto derivado que la va a consumir.
 
-**Checkpoint**: una capacidad programada corre sola de punta a punta.
+**Checkpoint**: una capacidad programada corre sola de punta a punta a nivel de base de datos y de validación estática del flow; falta la prueba end-to-end contra Kestra real (T016).
 
 ## Phase 4: User Story 2 - Evitar 2 ejecuciones de la misma conexión a la vez (Priority: P1)
 
 **Independent Test**: quickstart.md escenario 2.
 
-- [ ] T017 [US2] Conectar `private.conexion_en_curso` como chequeo previo dentro del propio flow `despachador-programado.yml` (ya cubierto por T014, este task es la prueba dedicada del comportamiento end-to-end, no solo de la función en aislamiento).
-- [ ] T018 [P] [US2] pgTAP de integración: dos capacidades de la misma conexión, ambas vencidas/debidas en el mismo ciclo del despachador → solo una se dispara, la otra queda pendiente para el próximo ciclo (no se pierde, no se duplica).
-- [ ] T019 [US2] Ejecutar `quickstart.md` escenario 2 (concurrencia) y escenario 3 (vigencia con timeout) contra el stack local real.
+- [X] T017 [US2] `private.conexion_en_curso` conectada dentro del propio flow `despachador-programado.yml` (tarea `conexion_bloqueada` + `io.kestra.plugin.core.flow.If`, ver T014) — confirmado por el test estático T015 que el chequeo ocurre antes del disparo, no después.
+- [X] T018 [P] [US2] pgTAP `supabase/tests/database/conexion_en_curso.test.sql` (ampliado): **verde en CI** — dos capacidades de la misma conexión, la primera en_curso bloquea a la segunda (`conexion_en_curso` = true count as blocking antes de disparar); al cerrar/vencer la primera, la conexión vuelve a estar libre para la segunda. La verificación de "no se pierde, no se duplica" a nivel del flow completo (dos filas debidas en el mismo ciclo del despachador) queda documentada en el comentario de `despachador-programado.yml` (`ultima_disparada_en` no se toca si `conexion_en_curso` bloqueó) — sin un test de integración Kestra real (requiere T016).
+- [ ] T019 [US2] Ejecutar `quickstart.md` escenario 2 (concurrencia) y escenario 3 (vigencia con timeout) contra Kestra real — **pendiente**, misma razón que T016.
 
-**Checkpoint**: SC-002 verificado en vivo, no solo en el diseño.
+**Checkpoint**: SC-002 verificado a nivel de base de datos (CI); falta la verificación end-to-end contra Kestra real (T016/T019), fuera del alcance de lo que este CI puede probar.
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 

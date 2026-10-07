@@ -36,6 +36,8 @@ select * from iniciar_ejecucion_worker(
 -- propio p_detalle al cerrar; son campos independientes.
 ```
 
+**Actualizado por la spec `disparo-programado-ciclo-ejecuciones`**: `p_origen = 'manual'` **y** `p_origen = 'programada'` generan una orden en `despachos_ejecucion` (antes de esa spec, solo `'manual'` la generaba). `'kestra'` sigue sin generarla — el flow que llama con ese origen ya va a ejecutar el trabajo en la misma corrida, insertar una orden ahí sería recursivo. Esto habilita un despachador programado genérico (`infra/kestra/flows/despachador-programado.yml`) que no conoce cómo ejecutar ninguna capacidad concreta: delega en el mismo outbox que ya consume `plantilla-generico.yml`/`plantilla-dedicado.yml`.
+
 Variables que Kestra entrega al contenedor worker (patrón spec 013/014, R5):
 
 ```text
