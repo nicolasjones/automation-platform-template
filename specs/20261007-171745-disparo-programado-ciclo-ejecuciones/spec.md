@@ -8,6 +8,12 @@
 
 **Input**: User description: "Generalizar el ciclo de ejecuciones de workers (capacidad de plataforma worker-execution-cycle) para soportar disparo programado (recurrente) además del disparo manual que ya existe hoy, sin tocar ninguno de los flows de ejecución de producto ni el contrato de `iniciar_ejecucion_worker`."
 
+## Clarifications
+
+### Session 2026-10-07
+
+- Q: ¿Quién puede crear/editar/quitar una programación de una capacidad? → A: Administrador de la organización, mismo patrón genérico ya existente del template (`private.es_administrador_de`) — no se deja abierto a que cada producto derivado decida su propia capa de permisos.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Programar una capacidad para que corra sola (Priority: P1)
@@ -60,6 +66,7 @@ El sistema nunca permite que dos ejecuciones de la misma conexión (mismo sistem
 - **FR-007**: El sistema MUST permitir que un producto derivado agregue una capacidad de ejecución nueva (sistema o automatización nueva) sin que el mecanismo de disparo programado ni la regla de concurrencia por conexión requieran ningún cambio de código específico para esa capacidad nueva.
 - **FR-008**: El sistema MUST registrar cada ejecución disparada automáticamente con el mismo detalle de auditoría (origen, actor, estado, timestamps, motivo de error) que ya registra el disparo manual — el origen debe quedar identificable como "programada", distinto de "manual".
 - **FR-009**: Esta capacidad MUST NOT modificar el contrato de `iniciar_ejecucion_worker` ni los flows de ejecución de producto existentes (plantillas genérica/dedicada ni sus derivados) — toda la generalización ocurre en una tabla y un flow nuevos, aditivos.
+- **FR-010**: El sistema MUST restringir a administradores de la organización la creación, edición y baja de programaciones — mismo criterio genérico ya existente del template (`private.es_administrador_de`), sin dejarlo como una decisión de cada producto derivado (Clarifications).
 
 ### Key Entities
 
