@@ -1,0 +1,67 @@
+# Spec disparo-programado-ciclo-ejecuciones (FR-002/FR-007/FR-009).
+# Genérico: no recibe sistema_externo ni imagen, no abre ninguna sesión
+# contra ningún sistema externo. Solo decide qué capacidad de ejecución
+# está debida según su programación, chequea que su conexión no esté ya
+# en curso, y delega vía iniciar_ejecucion_worker(..., 'programada') --
+# que ahora sí genera una orden en el mismo outbox que ya consumen
+# plantilla-generico.yml/plantilla-dedicado.yml y los flows de producto.
+# Ningún flow de ejecución existente cambia (FR-009).
+id: despachador-programado
+namespace: platform.orquestacion
+labels:
+  capa: core
+  dominio: plataforma
+  componente: despachador-programado
+description: "Dispara las capacidades de ejecución con una programación recurrente vencida, sin lógica de ningún sistema."
+tasks:
+  - id: capacidades_debidas
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: "{{ envs.kestra_orquestacion_db_url }}"
+    username: kestra_orquestacion
+    password: "{{ envs.kestra_orquestacion_db_password }}"
+    fetchType: FETCH
+    sql: select * from private.capacidades_programadas_debidas();
+  - id: despachar_programadas
+    type: io.kestra.plugin.core.flow.ForEach
+    values: "{{ outputs.capacidades_debidas.rows }}"
+    concurrencyLimit: 10
+    allowFailure: true
+    tasks:
+      - id: conexion_bloqueada
+        type: io.kestra.plugin.jdbc.postgresql.Query
+        url: "{{ envs.kestra_orquestacion_db_url }}"
+        username: kestra_orquestacion
+        password: "{{ envs.kestra_orquestacion_db_password }}"
+        fetchType: FETCH_ONE
+        sql: select private.conexion_en_curso(CAST(:conexion_id AS uuid)) as en_curso;
+        parameters:
+          conexion_id: "{{ fromJson(taskrun.value).conexion_id }}"
+      - id: iniciar_si_libre
+        type: io.kestra.plugin.core.flow.If
+        # Dos capacidades debidas de la misma conexión en el mismo ciclo:
+        # la primera queda en_curso y bloquea a la segunda, que vuelve a
+        # aparecer como debida (ultima_disparada_en no se tocó) en el
+        # próximo ciclo del Schedule -- no se pierde, no se duplica.
+        condition: "{{ not outputs.conexion_bloqueada[taskrun.value].row.en_curso }}"
+        then:
+          - id: iniciar_ejecucion_programada
+            type: io.kestra.plugin.jdbc.postgresql.Query
+            url: "{{ envs.kestra_orquestacion_db_url }}"
+            username: kestra_orquestacion
+            password: "{{ envs.kestra_orquestacion_db_password }}"
+            sql: select public.iniciar_ejecucion_worker(CAST(:conexion_id AS uuid), :clave, 'programada');
+            parameters:
+              conexion_id: "{{ fromJson(parent.taskrun.value).conexion_id }}"
+              clave: "{{ fromJson(parent.taskrun.value).clave }}"
+          - id: marcar_disparada
+            type: io.kestra.plugin.jdbc.postgresql.Query
+            url: "{{ envs.kestra_orquestacion_db_url }}"
+            username: kestra_orquestacion
+            password: "{{ envs.kestra_orquestacion_db_password }}"
+            sql: select private.marcar_programacion_disparada(CAST(:capacidad_id AS uuid));
+            parameters:
+              capacidad_id: "{{ fromJson(parent.taskrun.value).capacidad_id }}"
+triggers:
+  - id: schedule_despachador
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "*/10 * * * *"
