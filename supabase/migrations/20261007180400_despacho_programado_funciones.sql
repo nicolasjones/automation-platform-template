@@ -21,13 +21,18 @@ as $$
   -- "Debida ahora": frecuencia aplica hoy, ya pasó la hora configurada, no
   -- vencida (hasta), no empezó a futuro (desde), y no se disparó ya hoy
   -- (ultima_disparada_en, FR-002 -- evita doble disparo si el despachador
-  -- corre varias veces por día). No filtra por conexión activa/habilitada:
-  -- iniciar_ejecucion_worker ya rechaza ambos casos (CAPACIDAD_NO_HABILITADA,
-  -- CONEXION_CREDENCIAL_INVALIDA) -- no se duplica esa regla acá.
+  -- corre varias veces por día). Filtra capacidad habilitada y conexión
+  -- activa -- no porque iniciar_ejecucion_worker no lo vuelva a chequear
+  -- (lo hace), sino para no reintentar la misma capacidad deshabilitada o
+  -- con credencial inválida en cada ciclo del Schedule sin nunca poder
+  -- marcarla disparada (quedaría "debida" para siempre, generando ruido).
   select p.capacidad_id, c.conexion_id, c.clave
   from public.programacion_ejecucion p
   join public.capacidades_ejecucion c on c.id = p.capacidad_id
-  where p.desde <= current_date
+  join public.conexiones cx on cx.id = c.conexion_id
+  where c.habilitada
+    and cx.estado = 'activa'
+    and p.desde <= current_date
     and (p.hasta is null or p.hasta >= current_date)
     and (p.ultima_disparada_en is null or p.ultima_disparada_en::date < current_date)
     and clock_timestamp()::time >= p.hora
