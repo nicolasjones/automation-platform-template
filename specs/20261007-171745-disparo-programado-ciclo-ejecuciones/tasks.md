@@ -78,3 +78,7 @@ El stack local de Supabase de esta máquina pertenece a otro worktree (otra sesi
 4. Polish → PR listo para review/merge.
 
 No implementar todo en una sola corrida de `/speckit-implement` — `/clear` entre fases, mismo criterio que el resto de specs de este repo.
+
+## Desvío posterior al cierre
+
+- Bug real encontrado el 2026-10-08 en el producto derivado estudio-contable-automation, reproducido en vivo: `private.conexion_en_curso` (T008) quedó cableada solo como pre-chequeo externo de `despachador-programado.yml` (T017), nunca adentro de `iniciar_ejecucion_worker` — el disparo manual y un llamado directo con origen `kestra` seguían sin protección por conexión. Movida adentro de `iniciar_ejecucion_worker` para cubrir los 3 orígenes por igual — ver commit 9f348f7.

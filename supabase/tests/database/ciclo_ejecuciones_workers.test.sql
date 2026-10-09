@@ -178,15 +178,30 @@ reset role;
 -- US1: iniciar sin duplicar (FR-002, FR-003, FR-004)
 -- ============================================================================
 
+-- Las dos filas en_curso del fixture inicial (líneas 50-52) solo servían de
+-- lectura para el aislamiento RLS de arriba (nunca chequean estado): a partir
+-- de aquí CONEXION_EN_CURSO (bug real 2026-10-08) las tomaría como "ya hay
+-- una ejecución activa" de su propia conexión y bloquearía cada intento
+-- siguiente sobre esa misma conexión. Se cierran para no mezclar esa
+-- verificación con la de este bloque.
+update ejecuciones_worker set estado = 'exitosa', finalizada_en = clock_timestamp()
+where capacidad_id in ('e1111111-1111-1111-1111-111111111113', 'e2222222-2222-2222-2222-222222222224');
+
 insert into conexiones (id, organizacion_id, sistema_externo, estado, credencial_vault_id) values
-  ('e1111111-1111-1111-1111-111111111114', 'e1111111-1111-1111-1111-111111111111', 'sistema-x-inactivo', 'credencial_invalida', gen_random_uuid());
+  ('e1111111-1111-1111-1111-111111111114', 'e1111111-1111-1111-1111-111111111111', 'sistema-x-inactivo', 'credencial_invalida', gen_random_uuid()),
+  -- Conexiones propias para reporte-x4/reporte-x6: sus assertions verifican
+  -- actor/detalle, no concurrencia -- comparten conexion_id con reporte-x2
+  -- (deliberadamente dejada en_curso para el test de timeout más abajo) las
+  -- bloquearía con CONEXION_EN_CURSO sin relación con lo que de verdad prueban.
+  ('e1111111-1111-1111-1111-111111111121', 'e1111111-1111-1111-1111-111111111111', 'sistema-x', 'activa', gen_random_uuid()),
+  ('e1111111-1111-1111-1111-111111111122', 'e1111111-1111-1111-1111-111111111111', 'sistema-x', 'activa', gen_random_uuid());
 
 insert into capacidades_ejecucion (id, organizacion_id, conexion_id, clave, habilitada) values
   ('e1111111-1111-1111-1111-111111111115', 'e1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111112', 'reporte-x2', true),
   ('e1111111-1111-1111-1111-111111111116', 'e1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111112', 'reporte-x3', false),
   ('e1111111-1111-1111-1111-111111111117', 'e1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111114', 'reporte-inactivo', true),
-  ('e1111111-1111-1111-1111-111111111118', 'e1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111112', 'reporte-x4', true),
-  ('e1111111-1111-1111-1111-111111111120', 'e1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111112', 'reporte-x6', true),
+  ('e1111111-1111-1111-1111-111111111118', 'e1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111121', 'reporte-x4', true),
+  ('e1111111-1111-1111-1111-111111111120', 'e1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111122', 'reporte-x6', true),
   ('e2222222-2222-2222-2222-222222222225', 'e2222222-2222-2222-2222-222222222222', 'e2222222-2222-2222-2222-222222222223', 'reporte-y2', true);
 
 select set_config(
@@ -257,7 +272,7 @@ select throws_ok(
 );
 
 select lives_ok(
-  $$select iniciar_ejecucion_worker('e1111111-1111-1111-1111-111111111112', 'reporte-x4', 'manual', 'e1000000-0000-0000-0000-000000000001')$$,
+  $$select iniciar_ejecucion_worker('e1111111-1111-1111-1111-111111111121', 'reporte-x4', 'manual', 'e1000000-0000-0000-0000-000000000001')$$,
   'un disparo manual con actor se registra'
 );
 
@@ -272,7 +287,7 @@ select is(
 -- ejecuciones_worker que lea datos de la corrida (motivador real: un rango
 -- de fechas elegido en un disparo manual).
 select lives_ok(
-  $$select iniciar_ejecucion_worker('e1111111-1111-1111-1111-111111111112', 'reporte-x6', 'kestra', null, '{"rango": "2026-01"}'::jsonb)$$,
+  $$select iniciar_ejecucion_worker('e1111111-1111-1111-1111-111111111122', 'reporte-x6', 'kestra', null, '{"rango": "2026-01"}'::jsonb)$$,
   'p_detalle es un parámetro opcional aceptado por iniciar_ejecucion_worker'
 );
 
@@ -335,7 +350,7 @@ select set_config(
 set local role authenticated;
 
 select throws_ok(
-  $$select iniciar_ejecucion_worker('e1111111-1111-1111-1111-111111111112', 'reporte-x4', 'kestra')$$,
+  $$select iniciar_ejecucion_worker('e1111111-1111-1111-1111-111111111121', 'reporte-x4', 'kestra')$$,
   'P0001',
   'NO_AUTORIZADO: se requiere ser administrador de la organización e1111111-1111-1111-1111-111111111111',
   'un admin de otra organización no puede iniciar (antes que YA_EN_CURSO)'
@@ -351,7 +366,7 @@ select set_config(
 set local role authenticated;
 
 select throws_ok(
-  $$select iniciar_ejecucion_worker('e1111111-1111-1111-1111-111111111112', 'reporte-x4', 'kestra')$$,
+  $$select iniciar_ejecucion_worker('e1111111-1111-1111-1111-111111111121', 'reporte-x4', 'kestra')$$,
   'P0001',
   'NO_AUTORIZADO: se requiere ser administrador de la organización e1111111-1111-1111-1111-111111111111',
   'un miembro sin permiso no puede iniciar'
@@ -382,6 +397,13 @@ reset role;
 -- ============================================================================
 -- US2: cerrar con evidencia aislada (FR-005, FR-006, FR-009)
 -- ============================================================================
+
+-- reporte-x2 (reiniciada tras el timeout más arriba) ya cumplió su propósito
+-- y nada de acá en adelante la vuelve a referenciar: se cierra para que
+-- reporte-x5, nueva capacidad de la MISMA conexión, no choque con
+-- CONEXION_EN_CURSO (bug real 2026-10-08, ajeno a lo que prueba esta sección).
+update ejecuciones_worker set estado = 'exitosa', finalizada_en = clock_timestamp()
+where capacidad_id = 'e1111111-1111-1111-1111-111111111115' and estado = 'en_curso';
 
 create temporary table us2_ids (key text primary key, val uuid);
 grant all on us2_ids to authenticated;
