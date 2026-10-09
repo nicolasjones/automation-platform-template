@@ -22,9 +22,9 @@
     },
     {
       "id": "worker-execution-cycle",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "title": "Ciclo auditable de ejecuciones de workers",
-      "paths": ["supabase/migrations/20260920000000_ciclo_ejecuciones_workers.sql", "supabase/migrations/20260923120000_detalle_inicio_ejecucion.sql", "workers/CONTRATO.md", "infra/kestra/flows/plantilla-generico.yml", "infra/kestra/flows/plantilla-dedicado.yml", "infra/kestra/flows/limpieza-evidencia.yml", "supabase/migrations/20260925200000_ejecucion_en_curso_worker.sql", "supabase/migrations/20260925210000_destrabar_conexion_invalida.sql", "supabase/migrations/20261007180000_programacion_ejecucion.sql", "supabase/migrations/20261007180100_despachar_programada_outbox.sql", "supabase/migrations/20261007180200_conexion_en_curso.sql", "supabase/migrations/20261007180300_ultima_disparada_programacion.sql", "supabase/migrations/20261007180400_despacho_programado_funciones.sql", "supabase/migrations/20261007180500_rpc_programacion_ejecucion.sql", "infra/kestra/flows/despachador-programado.yml"]
+      "paths": ["supabase/migrations/20260920000000_ciclo_ejecuciones_workers.sql", "supabase/migrations/20260923120000_detalle_inicio_ejecucion.sql", "workers/CONTRATO.md", "infra/kestra/flows/plantilla-generico.yml", "infra/kestra/flows/plantilla-dedicado.yml", "infra/kestra/flows/limpieza-evidencia.yml", "supabase/migrations/20260925200000_ejecucion_en_curso_worker.sql", "supabase/migrations/20260925210000_destrabar_conexion_invalida.sql", "supabase/migrations/20261007180000_programacion_ejecucion.sql", "supabase/migrations/20261007180100_despachar_programada_outbox.sql", "supabase/migrations/20261007180200_conexion_en_curso.sql", "supabase/migrations/20261007180300_ultima_disparada_programacion.sql", "supabase/migrations/20261007180400_despacho_programado_funciones.sql", "supabase/migrations/20261007180500_rpc_programacion_ejecucion.sql", "infra/kestra/flows/despachador-programado.yml", "supabase/migrations/20261008234500_bloquear_conexion_en_curso.sql"]
     },
     {
       "id": "durable-execution-outbox",

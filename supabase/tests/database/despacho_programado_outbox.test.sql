@@ -58,6 +58,14 @@ select is(
   'la orden nueva queda pendiente, lista para que reclamar_despachos_ejecucion la recoja'
 );
 
+-- reporte-programado (arriba) queda en_curso a propósito para los dos
+-- asserts anteriores; se cierra antes de reporte-kestra para no activar
+-- CONEXION_EN_CURSO (bug real 2026-10-08, ajeno a lo que prueba este test).
+reset role;
+update ejecuciones_worker set estado = 'exitosa', finalizada_en = clock_timestamp()
+where capacidad_id = 'b1111111-1111-1111-1111-111111111113';
+set local role authenticated;
+
 select results_eq(
   $$select iniciar_ejecucion_worker('b1111111-1111-1111-1111-111111111112', 'reporte-kestra', 'kestra') is not null$$,
   $$select true$$,

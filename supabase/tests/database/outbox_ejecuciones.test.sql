@@ -82,6 +82,13 @@ select ok(
   'Kestra puede resolver un reclamo cercado por intento'
 );
 
+-- La fila de fixture sembrada arriba (outbox-x, misma conexion ...112) solo
+-- servía para los asserts de RLS/constraint de más arriba y quedó en_curso
+-- por default: se cierra para no activar CONEXION_EN_CURSO (bug real
+-- 2026-10-08, ajeno a lo que prueba outbox-atomica acá abajo).
+update ejecuciones_worker set estado = 'exitosa', finalizada_en = clock_timestamp()
+where id = 'd1111111-1111-1111-1111-111111111114';
+
 select set_config('request.jwt.claims', json_build_object('sub', 'd1000000-0000-0000-0000-000000000001', 'role', 'authenticated')::text, true);
 set local role authenticated;
 select ok(
