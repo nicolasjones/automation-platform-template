@@ -32,6 +32,11 @@ jobs:
   verificar:
     runs-on: [self-hosted, platform-local]
     steps:
+      - name: Asegurar la label plataforma-revisada
+        run: gh label create plataforma-revisada --color FBCA04 --description 'PR de plataforma revisado a mano' || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
