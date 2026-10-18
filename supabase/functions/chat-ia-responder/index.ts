@@ -9,7 +9,11 @@
 // resuelve contra fuentes_chat_ia/capacidades_chat_ia con la sesión del
 // propio usuario (nunca service-role) antes de ejecutar cualquier
 // consulta — el aislamiento de organización vive en esa consulta (RLS),
-// no en el prompt.
+// no en el prompt. El catálogo de fuentes legibles (con sus columnas) se
+// descubre en cada invocación y se inyecta en la descripción del tool y en
+// la instrucción de sistema (catalogo.ts); los criterios de rango, orden,
+// límite y agregación se validan contra esas columnas antes de consultar
+// (consulta.ts). Ver docs/chat-companion-lectura.md.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 // Ruta relativa, no 'npm:@platform/ia': @platform/ia es "private": true,
 // nunca se publicó a npm — el specifier npm: nunca iba a resolver en
@@ -17,6 +21,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 // así que importar el archivo fuente directo funciona sin build
 // intermedio.
 import { prepararInvocacion, sanitizarDato, invocarProveedorIa, type ContratoConsumidor, type PerfilModelo } from '../_shared/ia/index.ts'
+import { construirDescripcionLeer, construirSystemPrompt, mensajeSinRespuesta, type FuenteChat } from './catalogo.ts'
+import { planificarConsulta, type EntradaLeer } from './consulta.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,14 +49,21 @@ const CONTRATO: ContratoConsumidor = {
   claveAislamientoOrganizacion: 'organizacion_id',
 }
 
+// La descripción de esta herramienta se reemplaza en cada invocación por el
+// catálogo de vistas legibles del usuario (catalogo.ts) — sin eso el modelo no
+// tiene de dónde sacar un nombre de vista y lo inventa.
 const HERRAMIENTA_LEER = {
   name: 'leer',
   description: 'Lee datos de una funcionalidad habilitada de la organización del usuario.',
   input_schema: {
     type: 'object',
     properties: {
-      vista: { type: 'string', description: 'Nombre de la vista registrada a consultar.' },
-      filtros: { type: 'object', description: 'Pares clave/valor para filtrar la consulta.' },
+      vista: { type: 'string', description: 'Nombre exacto de la vista registrada a consultar.' },
+      filtros: { type: 'object', description: 'Pares columna/valor para filtrar por igualdad. Usá solo columnas que figuren en la lista de columnas de esa vista.' },
+      rango: { type: 'object', description: 'Rango por columna: {"columna": {"desde": "...", "hasta": "..."}} (mayor o igual a "desde", menor o igual a "hasta"). Se puede omitir uno de los dos extremos.' },
+      orden: { type: 'object', description: 'Orden de las filas: {"columna": "fecha", "direccion": "asc"|"desc"}.' },
+      limite: { type: 'number', description: 'Máximo de filas a devolver. Por defecto 50; tope 1000.' },
+      agregar: { type: 'object', description: 'Totales en vez de filas: {"alias": {"columna": "debe", "operacion": "suma"|"cantidad"|"promedio"|"minimo"|"maximo"}}. Usalo para sumas, conteos y promedios: no traigas las filas para sumarlas vos.' },
     },
     required: ['vista'],
   },
@@ -90,14 +103,12 @@ type MensajeOpenAI =
   | { role: 'assistant'; content: string | null; tool_calls?: ToolCallOpenAI[] }
   | { role: 'tool'; tool_call_id: string; content: string }
 
-// Instrucción de sistema explícita: sin esto el modelo no tiene por qué
-// preferir "leer"/"ejecutar" sobre responder de memoria, ni saber que debe
-// decir que no tiene acceso en vez de inventar. Prompt base genérico — el
-// producto derivado puede reemplazar este string por uno propio (su
-// nombre, su dominio) editando esta constante localmente; el mecanismo no
+// La instrucción de sistema se arma en cada invocación con el catálogo de
+// fuentes legibles (catalogo.ts): sin eso el modelo no tiene por qué preferir
+// "leer"/"ejecutar" sobre responder de memoria, ni sabe que debe decir que no
+// tiene acceso en vez de inventar. El producto derivado puede reemplazar el
+// prompt base con la variable CHAT_COMPANION_SYSTEM_PROMPT; el mecanismo no
 // depende de su contenido.
-const SYSTEM_PROMPT = Deno.env.get('CHAT_COMPANION_SYSTEM_PROMPT')
-  ?? 'Sos un chat conversacional con acceso a los datos habilitados de esta organización. Respondé únicamente con datos obtenidos a través de las herramientas "leer" (para consultar datos) y "ejecutar" (para proponer una acción, nunca la ejecutes vos mismo). Si no encontrás la información con "leer", decí explícitamente que no tenés acceso a eso — nunca inventes información. No asumas que una funcionalidad está disponible: si "leer" devuelve FUENTE_NO_DISPONIBLE, es que esta organización no tiene acceso a esos datos.'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -209,26 +220,86 @@ Deno.serve(async (req) => {
 
   const perfil: PerfilModelo = { id: politica.perfil_principal_id, proveedorCodigo: credencial.proveedor_codigo, modeloId: credencial.modelo_id }
 
-  async function leer(vista: string, filtros: Record<string, string | number> = {}) {
+  // Descubrimiento de fuentes (FR-001..FR-004): qué puede leer ESTE usuario se
+  // resuelve en la capa de datos, con su propia sesión (chat_fuentes_disponibles
+  // recorta por puede_chat_leer_funcionalidad y devuelve las columnas de cada
+  // vista). Nunca decide el modelo ni el prompt: si una fuente no está acá, no
+  // existe para el chat.
+  let fuentes: FuenteChat[] = []
+  try {
+    const { data, error } = await asUser.rpc('chat_fuentes_disponibles')
+    if (error) console.error('chat-ia-responder: no se pudo listar fuentes', error.message)
+    else fuentes = (data ?? []) as FuenteChat[]
+  } catch (error) {
+    console.error('chat-ia-responder: no se pudo listar fuentes', error)
+  }
+
+  // La herramienta "leer" lleva el catálogo de vistas legibles con sus columnas
+  // (así el modelo usa el nombre exacto de la vista y sabe qué puede filtrar).
+  const herramientaLeer = { ...HERRAMIENTA_LEER, description: construirDescripcionLeer(fuentes) }
+  const systemPrompt = construirSystemPrompt(fuentes, Deno.env.get('CHAT_COMPANION_SYSTEM_PROMPT') ?? undefined)
+
+  async function leer(vista: string, entrada: EntradaLeer) {
     const { data: fuente } = await asUser.from('fuentes_chat_ia').select('feature_id').eq('vista', vista).maybeSingle()
     if (!fuente) return { error: 'FUENTE_NO_DISPONIBLE' }
 
     const { data: puedeLeer } = await asUser.rpc('puede_chat_leer_funcionalidad', { p_feature_id: fuente.feature_id })
     if (!puedeLeer) return { error: 'FUENTE_NO_DISPONIBLE' }
 
-    let query = asUser.from(vista).select('*')
-    for (const [clave, valor] of Object.entries(filtros)) query = query.eq(clave, valor)
-    const { data, error } = await query
+    // Las columnas ya vinieron del descubrimiento: con ellas el plan descarta
+    // un criterio sobre una columna inventada ANTES de golpear la base (era el
+    // origen de ERROR_AL_LEER en el producto de origen).
+    const columnas = fuentes.find((f) => f.vista === vista)?.columnas ?? []
+    const plan = planificarConsulta(vista, entrada, columnas)
+
+    // PostgREST toma el schema por header, no en la ruta: asUser.from('dominio.x')
+    // busca la tabla "dominio.x" en public y da 404 (PGRST205).
+    const cliente = plan.esquema === 'public' ? asUser : asUser.schema(plan.esquema)
+
+    function consultar(conCriterios: boolean) {
+      let query = cliente.from(plan.tabla).select(plan.seleccion)
+      if (conCriterios) {
+        for (const filtro of plan.igualdad) query = query.eq(filtro.columna, filtro.valor)
+        for (const criterio of plan.rango) {
+          if (criterio.desde !== undefined) query = query.gte(criterio.columna, criterio.desde)
+          if (criterio.hasta !== undefined) query = query.lte(criterio.columna, criterio.hasta)
+        }
+      }
+      // Con agregados la respuesta es una sola fila de totales: ni orden ni tope.
+      if (plan.agregados.length > 0) return query
+      if (plan.orden) query = query.order(plan.orden.columna, { ascending: plan.orden.direccion === 'asc' })
+      return query.limit(plan.limite)
+    }
+
+    let { data, error } = await consultar(true)
+    // Red de seguridad (FR-010): un criterio con columna válida pero valor no
+    // convertible igual hace fallar la consulta (400). Se reintenta sin
+    // criterios en vez de perder la respuesta — el RLS ya acotó los datos a la
+    // organización, y el modelo declara en su respuesta que el criterio no se
+    // pudo aplicar.
+    let descartados = [...plan.descartados]
+    if (error && (plan.igualdad.length > 0 || plan.rango.length > 0)) {
+      const reintento = await consultar(false)
+      if (!reintento.error) {
+        data = reintento.data
+        error = null
+        descartados.push('los filtros/rangos no se pudieron aplicar y se devolvieron los datos sin acotar')
+      } else {
+        error = reintento.error
+      }
+    }
     if (error) return { error: 'ERROR_AL_LEER' }
+
     // CONTRATO.datosPermitidos es el allowlist de la ENTRADA (mensaje del
     // usuario) — no aplica acá. sanitizarDato(data, CONTRATO.datosPermitidos)
-    // borraría casi todas las columnas de cualquier vista real (solo
-    // dejaría pasar las que coincidieran por nombre con
-    // 'mensaje'/'organizacion_id'). El límite de seguridad real de qué
-    // datos puede ver el chat ya lo decide el superadmin al registrar la
-    // vista en fuentes_chat_ia — no hace falta un segundo allowlist por
-    // fila encima de eso.
-    return { filas: data }
+    // borraría casi todas las columnas de cualquier vista real (solo dejaría
+    // pasar las que coincidieran por nombre con 'mensaje'/'organizacion_id').
+    // El límite de seguridad real de qué datos puede ver el chat ya lo decide
+    // el superadmin al registrar la vista en fuentes_chat_ia — no hace falta
+    // un segundo allowlist por fila encima de eso.
+    const extra = descartados.length > 0 ? { criteriosDescartados: descartados } : {}
+    if (plan.agregados.length > 0) return { agregados: data, ...extra }
+    return { filas: data, ...extra }
   }
 
   // Propone la acción — nunca la ejecuta acá. Ejecutar de verdad es
@@ -271,8 +342,8 @@ Deno.serve(async (req) => {
       return { tipo: 'rechazo', mensaje: 'Esa acción no está disponible para tu organización.' }
     }
     if (name === 'leer') {
-      const i = input as { vista?: string; filtros?: Record<string, string | number> }
-      const resultado = i.vista ? await leer(i.vista, i.filtros ?? {}) : { error: 'FUENTE_NO_DISPONIBLE' }
+      const i = input as EntradaLeer
+      const resultado = i.vista ? await leer(String(i.vista), i) : { error: 'FUENTE_NO_DISPONIBLE' }
       return { tipo: 'resultado', valor: resultado }
     }
     return { tipo: 'resultado', valor: { error: 'HERRAMIENTA_DESCONOCIDA' } }
@@ -290,7 +361,7 @@ Deno.serve(async (req) => {
       return await invocarProveedorIa(
         perfil,
         credencial.clave,
-        { model: perfil.modeloId, max_tokens: 1024, system: SYSTEM_PROMPT, tools: [HERRAMIENTA_LEER, HERRAMIENTA_EJECUTAR], messages: mensajes },
+        { model: perfil.modeloId, max_tokens: 1024, system: systemPrompt, tools: [herramientaLeer, HERRAMIENTA_EJECUTAR], messages: mensajes },
         (url, init) => fetch(url, init),
       ) as { content: BloqueAnthropic[]; stop_reason: string }
     }
@@ -328,7 +399,7 @@ Deno.serve(async (req) => {
     }
 
     const textoFinal = respuesta.content.find((b): b is Extract<BloqueAnthropic, { type: 'text' }> => b.type === 'text')?.text
-      ?? 'No encontré información relevante para responder eso.'
+      ?? mensajeSinRespuesta(fuentes)
     await asUser.from('mensajes_chat_ia').insert({ conversacion_id: conversacionId, origen: 'chat', contenido: textoFinal })
     return jsonResponse({ conversacion_id: conversacionId, respuesta: textoFinal }, 200)
   }
@@ -342,7 +413,7 @@ Deno.serve(async (req) => {
   // ========================================================================
   async function cicloOpenAI(): Promise<Response> {
     const mensajes: MensajeOpenAI[] = [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       { role: 'user', content: String(entradaSanitizada.mensaje) },
     ]
 
@@ -350,7 +421,7 @@ Deno.serve(async (req) => {
       return await invocarProveedorIa(
         perfil,
         credencial.clave,
-        { model: perfil.modeloId, tools: [herramientaOpenAI(HERRAMIENTA_LEER), herramientaOpenAI(HERRAMIENTA_EJECUTAR)], messages: mensajes },
+        { model: perfil.modeloId, tools: [herramientaOpenAI(herramientaLeer), herramientaOpenAI(HERRAMIENTA_EJECUTAR)], messages: mensajes },
         (url, init) => fetch(url, init),
       ) as { choices: Array<{ message: { content: string | null; tool_calls?: ToolCallOpenAI[] }; finish_reason: string }> }
     }
@@ -394,7 +465,7 @@ Deno.serve(async (req) => {
       mensajeRespuesta = respuesta.choices[0]?.message
     }
 
-    const textoFinal = mensajeRespuesta?.content ?? 'No encontré información relevante para responder eso.'
+    const textoFinal = mensajeRespuesta?.content ?? mensajeSinRespuesta(fuentes)
     await asUser.from('mensajes_chat_ia').insert({ conversacion_id: conversacionId, origen: 'chat', contenido: textoFinal })
     return jsonResponse({ conversacion_id: conversacionId, respuesta: textoFinal }, 200)
   }
