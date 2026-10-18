@@ -77,9 +77,11 @@
 - [x] T018 Actualizar la documentación de plataforma del mecanismo (contrato de la herramienta de lectura, habilitación de agregaciones en PostgREST y su reversión) en `docs/`; correr `pnpm docs:check`.
 - [x] T019 Correr y dejar verdes: `pnpm lint`, `pnpm build`, `pnpm test:edge`, `pnpm test:db`, `pnpm template:capabilities:check`, `pnpm docs:check`.
 - [x] T020 Anotar en `tasks.md` las notas de desvío (cortas, con `ver commit <hash>`).
-- [ ] T021 Cerrar: merge del PR con `--no-ff` (nunca squash ni rebase), conservar la rama hasta confirmar que el cierre quedó estable, y actualizar la fila correspondiente en `docs/roadmap-template.md` si aplica.
+- [x] T021 Cerrar: merge del PR con `--no-ff` (nunca squash ni rebase), conservar la rama hasta confirmar que el cierre quedó estable, y actualizar la fila correspondiente en `docs/roadmap-template.md` si aplica.
 
 **Checkpoint**: spec cerrada en `main` del template; el producto derivado puede traerla con `git merge upstream/main`.
+
+**Cierre**: merge del PR #44 en `main` con merge commit `fb835c5` (rama `20261018-104239-chat-lectura-filtros` conservada); fila "Lectura gobernada de datos por el chat companion" agregada a `docs/roadmap-template.md` y nota del puerto publicado del stack de CI en `docs/ci-self-hosted-storage.md` (mismo commit de cierre).
 
 ---
 
