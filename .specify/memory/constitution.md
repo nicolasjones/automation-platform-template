@@ -1,9 +1,12 @@
 <!--
 Sync Impact Report
-- Version change: 1.7.0 → 1.7.1 (PATCH: aclara que cada tabla se ubica por su naturaleza —
-  no toda tabla nueva va a `dominio` — y que la spec DEBE declarar el esquema de cada tabla.)
+- Version change: 1.7.1 → 1.7.2 (PATCH: corrección de un hecho — el flujo de
+  entrega ya no promete un Preview en Vercel; un producto que no use Vercel
+  despliega su frontend como build estático detrás de su proxy. El PR sigue
+  siendo el gate de CI, que es lo que el texto ya decía en el resto del
+  párrafo.)
 - Modified principles: ninguno
-- Added sections: Principle VII. Plataforma y dominio (esquemas)
+- Added sections: ninguno
 - Removed sections: ninguna
 - Follow-up TODOs: ninguno
 -->
@@ -81,11 +84,10 @@ la crea.
 ## Delivery Workflow
 
 Las ramas de funcionalidades nacen de `main`. Toda spec nueva abre su Pull
-Request contra `main` al crear la rama, no al terminar el trabajo — así los
-pull requests generan Preview en Vercel y ejecutan validaciones durante todo
-el desarrollo, no solo al final. Con un único agente operando el repo, el PR
-no cumple función de revisión por pares: es el gate de CI/Preview y el punto
-de reversión de la spec.
+Request contra `main` al crear la rama, no al terminar el trabajo — así las
+validaciones de CI se ejecutan durante todo el desarrollo, no solo al final.
+Con un único agente operando el repo, el PR no cumple función de revisión
+por pares: es el gate de CI y el punto de reversión de la spec.
 
 El cierre de una spec es el merge de ese PR a `main` — con merge commit
 (`--no-ff`), nunca squash ni rebase, para que deshacer la spec completa sea
@@ -109,4 +111,4 @@ actualizar en el mismo cambio una spec, una guía en `docs/`, esta constitución
 `AGENTS.md` o `CLAUDE.md`. El control automatizado `pnpm docs:check` DEBE correr
 en CI para impedir que el código evolucione sin una decisión o contrato escrito.
 
-**Version**: 1.7.1 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-10-12
+**Version**: 1.7.2 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-11-24
